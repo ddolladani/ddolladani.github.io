@@ -1,69 +1,75 @@
 import Phaser from "phaser";
+import { SKY } from "../art/palette.js";
+import { drawSky, addStars, addCloud } from "../art/Scenery.js";
+import { addHouse1166 } from "../art/House1166.js";
+import { addVignette, addColorGrade, addFireflies, ensureGlowTexture } from "../art/effects.js";
 
 export class TitleScene extends Phaser.Scene {
-  constructor() {
-    super({ key: "TitleScene" });
-  }
+  constructor() { super({ key: "TitleScene" }); }
 
   create() {
     const { width, height } = this.scale;
 
-    this.cameras.main.setBackgroundColor("#0a0a1a");
+    // dusk sky behind a softly lit 1166
+    drawSky(this, SKY.dusk);
+    addStars(this, 50);
+    addCloud(this, 260, 90, 0.7);
 
-    // Start music
-    if (!this.sound.get("music_main")) {
+    // house silhouette, dim and warm-windowed
+    const house = addHouse1166(this, width / 2 - 192, 150, { scale: 0.62, depth: 5, lit: true });
+    house.setAlpha(0.96);
+
+    addFireflies(this, { count: 30, color: 0xffe2a0 });
+    addColorGrade(this, 0x5a3a6a, 0.14);
+    addVignette(this, 0.55);
+
+    // start music if loaded
+    if (this.cache.audio.exists("music_main") && !this.sound.get("music_main")) {
       this.sound.add("music_main", { loop: true, volume: 0.5 }).play();
     }
 
+    // glow behind title
+    const key = ensureGlowTexture(this);
+    this.add.image(width / 2, height * 0.30, key).setScale(9, 5)
+      .setTint(0xffd56b).setAlpha(0.25).setBlendMode(Phaser.BlendModes.ADD).setDepth(100);
+
     // Title
-    this.add.text(width / 2, height * 0.28, "DAD", {
-      fontFamily: '"Press Start 2P", monospace',
-      fontSize: "52px",
-      color: "#ffd700",
-      stroke: "#000000",
-      strokeThickness: 6
-    }).setOrigin(0.5);
+    const shadow = this.add.text(width / 2 + 3, height * 0.27 + 4, "DAD", {
+      fontFamily: '"Fredoka", sans-serif', fontSize: "82px", fontStyle: "700",
+      color: "#000000"
+    }).setOrigin(0.5).setAlpha(0.4).setDepth(101);
+    this.add.text(width / 2, height * 0.27, "DAD", {
+      fontFamily: '"Fredoka", sans-serif', fontSize: "82px", fontStyle: "700",
+      color: "#ffd56b"
+    }).setOrigin(0.5).setDepth(102);
 
-    this.add.text(width / 2, height * 0.42, "The Book of Derrick", {
-      fontFamily: '"Press Start 2P", monospace',
-      fontSize: "18px",
-      color: "#ffffff"
-    }).setOrigin(0.5);
+    this.add.text(width / 2, height * 0.45, "The Book of Derrick", {
+      fontFamily: '"Caveat", cursive', fontSize: "40px", fontStyle: "700",
+      color: "#fdf3df"
+    }).setOrigin(0.5).setDepth(102);
 
-    // Subtitle
     this.add.text(width / 2, height * 0.55, "A Father's Day Adventure", {
-      fontFamily: '"Press Start 2P", monospace',
-      fontSize: "11px",
-      color: "#aaaaaa"
-    }).setOrigin(0.5);
+      fontFamily: '"Nunito", sans-serif', fontSize: "15px", fontStyle: "700",
+      color: "#e8d8ff"
+    }).setOrigin(0.5).setDepth(102).setAlpha(0.85);
 
-    // Blinking start prompt
-    const startText = this.add.text(width / 2, height * 0.74, "PRESS ENTER TO BEGIN", {
-      fontFamily: '"Press Start 2P", monospace',
-      fontSize: "14px",
-      color: "#ffd700"
-    }).setOrigin(0.5);
+    // start prompt
+    const start = this.add.text(width / 2, height * 0.74, "Press ENTER to begin", {
+      fontFamily: '"Nunito", sans-serif', fontSize: "18px", fontStyle: "800",
+      color: "#ffffff"
+    }).setOrigin(0.5).setDepth(102);
+    this.tweens.add({ targets: start, alpha: 0.2, duration: 800, yoyo: true, repeat: -1 });
 
-    this.tweens.add({
-      targets: startText,
-      alpha: 0,
-      duration: 600,
-      yoyo: true,
-      repeat: -1
-    });
+    this.add.text(width / 2, height * 0.93, "made with love by DJ & Danielle", {
+      fontFamily: '"Caveat", cursive', fontSize: "22px",
+      color: "#cdbce0"
+    }).setOrigin(0.5).setDepth(102);
 
-    // Credits
-    this.add.text(width / 2, height * 0.92, "Made with love by DJ & Danielle", {
-      fontFamily: '"Press Start 2P", monospace',
-      fontSize: "9px",
-      color: "#666666"
-    }).setOrigin(0.5);
+    this.cameras.main.fadeIn(800, 6, 8, 16);
 
     this.input.keyboard.once("keydown-ENTER", () => {
-      this.cameras.main.fadeOut(600, 0, 0, 0);
-      this.cameras.main.once("camerafadeoutcomplete", () => {
-        this.scene.start("HubScene");
-      });
+      this.cameras.main.fadeOut(600, 6, 8, 16);
+      this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("HubScene"));
     });
   }
 }

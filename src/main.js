@@ -12,9 +12,19 @@ const config = {
   type: Phaser.AUTO,
   width: GAME_WIDTH,
   height: GAME_HEIGHT,
-  backgroundColor: "#000000",
-  pixelArt: true,
+  backgroundColor: "#0a0a14",
+  // Illustrated style: smooth shapes, antialiased, high-DPI crisp
+  pixelArt: false,
+  antialias: true,
+  roundPixels: false,
+  resolution: window.devicePixelRatio || 1,
   parent: document.body,
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    width: GAME_WIDTH,
+    height: GAME_HEIGHT
+  },
   scene: [
     BootScene,
     IntroScene,

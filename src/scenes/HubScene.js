@@ -1,160 +1,134 @@
 import Phaser from "phaser";
-import { GAME_WIDTH, GAME_HEIGHT, PLAYER_SPEED, CHAPTERS } from "../config/gameConfig.js";
+import { GAME_WIDTH, GAME_HEIGHT, PLAYER_SPEED } from "../config/gameConfig.js";
+import { SKY, GROUND, CHAPTER_THEME, FOLIAGE, HOUSE } from "../art/palette.js";
+import { drawSky, addSun, addCloud, drawGround, addTree, addBush, addFlowers } from "../art/Scenery.js";
+import { addVignette, addColorGrade, addFireflies } from "../art/effects.js";
+import { addHouse1166 } from "../art/House1166.js";
+import { Character } from "../entities/Character.js";
+import { signpost, hintPill, heading } from "../ui/ui.js";
 
-const HOUSE_COLOR  = 0x8b7355;
-const GRASS_COLOR  = 0x4a7c3f;
-const PATH_COLOR   = 0xc8a96e;
-const DOOR_COLOR   = 0x5c3d1a;
+const HORIZON = 286;
 
-// Chapter door positions
 const DOORS = [
-  { key: "dj",       x: 280, y: 260, label: "DJ",       color: CHAPTERS.dj.color },
-  { key: "danielle", x: 480, y: 260, label: "Danielle",  color: CHAPTERS.danielle.color },
-  { key: "together", x: 680, y: 260, label: "Together",  color: CHAPTERS.together.color }
+  { key: "dj",       x: 196, y: 452 },
+  { key: "together", x: 480, y: 540 },
+  { key: "danielle", x: 764, y: 452 }
 ];
 
 export class HubScene extends Phaser.Scene {
-  constructor() {
-    super({ key: "HubScene" });
-  }
+  constructor() { super({ key: "HubScene" }); }
 
   create() {
     const { width, height } = this.scale;
-    this._completedChapters = this.registry.get("completedChapters") || [];
+    this.completed = this.registry.get("completedChapters") || [];
 
-    this._drawWorld(width, height);
-    this._createPlayer(width, height);
-    this._createDoors();
-    this._createUI(width);
+    // ── Sky & atmosphere ──
+    drawSky(this, SKY.day);
+    addSun(this, 130, 90, { radius: 36 });
+    addCloud(this, 260, 80, 1);
+    addCloud(this, 640, 120, 0.8);
+    addCloud(this, 480, 60, 0.6);
 
-    this.cameras.main.fadeIn(600, 0, 0, 0);
+    // ── Ground ──
+    drawGround(this, GROUND.grass, HORIZON);
+    this._drawDriveway();
 
-    // Listen for chapter completions coming back
-    this.events.on("memory-closed", () => {});
-  }
+    // ── House ──
+    addHouse1166(this, 286, 70, { scale: 0.62, depth: 5 });
 
-  _drawWorld(width, height) {
-    const g = this.add.graphics();
+    // ── Landscaping ──
+    addTree(this, 80, HORIZON + 26, { scale: 1.15, depth: 8 });
+    addTree(this, 902, HORIZON + 36, { scale: 1.0, depth: 8,
+      foliage: [FOLIAGE.treeC, FOLIAGE.treeA, FOLIAGE.treeB] });
+    addBush(this, 338, HORIZON + 18, { scale: 1.0, depth: 9 });
+    addBush(this, 615, HORIZON + 14, { scale: 0.7, depth: 9 });
+    addFlowers(this, 250, HORIZON + 40, 9);
+    addFlowers(this, 690, HORIZON + 36, 9);
+    addFlowers(this, 430, HORIZON + 30, 9);
 
-    // Sky/background
-    g.fillStyle(0x87ceeb);
-    g.fillRect(0, 0, width, height * 0.45);
-
-    // Grass
-    g.fillStyle(GRASS_COLOR);
-    g.fillRect(0, height * 0.45, width, height);
-
-    // House facade
-    g.fillStyle(HOUSE_COLOR);
-    g.fillRect(140, 100, width - 280, 240);
-
-    // Roof
-    g.fillStyle(0x5c3324);
-    g.fillTriangle(120, 100, width / 2, 20, width - 120, 100);
-
-    // Walkway
-    g.fillStyle(PATH_COLOR);
-    g.fillRect(width / 2 - 60, 340, 120, 160);
-
-    // House address sign
-    this.add.text(width / 2, 52, "1166", {
-      fontFamily: '"Press Start 2P", monospace',
-      fontSize: "14px",
-      color: "#ffd700",
-      stroke: "#000000",
-      strokeThickness: 3
-    }).setOrigin(0.5);
-  }
-
-  _createDoors() {
-    this._doorZones = [];
-
+    // ── Chapter signposts ──
+    this._signs = [];
     DOORS.forEach(d => {
-      const g = this.add.graphics();
-
-      // Door frame
-      g.fillStyle(DOOR_COLOR);
-      g.fillRect(d.x - 30, d.y - 50, 60, 90);
-
-      // Door color accent
-      g.fillStyle(d.color);
-      g.fillRect(d.x - 24, d.y - 44, 48, 78);
-
-      // Checkmark if completed
-      const done = this._completedChapters.includes(d.key);
+      const theme = CHAPTER_THEME[d.key];
+      const done = this.completed.includes(d.key);
+      const post = signpost(this, d.x, d.y, theme.label, theme.accent, 30);
       if (done) {
-        this.add.text(d.x, d.y - 8, "✓", {
-          fontFamily: "monospace",
-          fontSize: "22px",
-          color: "#ffffff"
-        }).setOrigin(0.5);
+        this.add.text(d.x, d.y - 78, "✓ " + theme.label, {
+          fontFamily: '"Fredoka", sans-serif', fontSize: "15px", fontStyle: "600",
+          color: "#bfe3a8"
+        }).setOrigin(0.5).setDepth(31);
       }
-
-      // Label above door
-      this.add.text(d.x, d.y - 64, d.label, {
-        fontFamily: '"Press Start 2P", monospace',
-        fontSize: "9px",
-        color: "#ffffff",
-        stroke: "#000000",
-        strokeThickness: 3
-      }).setOrigin(0.5);
-
-      // Interaction zone
-      const zone = this.add.zone(d.x, d.y, 70, 100).setOrigin(0.5);
-      this._doorZones.push({ zone, key: d.key, x: d.x, y: d.y });
+      const pill = hintPill(this, d.x, d.y + 22, "Press  E", { accent: theme.accent });
+      pill.setVisible(false);
+      this._signs.push({ ...d, post, pill, theme });
     });
+
+    // ── Character ──
+    this.player = new Character(this, width / 2, height - 70, { scale: 1.05, depth: 50 });
+
+    // ── Ambience & framing ──
+    addFireflies(this, { count: 22, color: 0xfff0b0, area: { x: 0, y: HORIZON, w: width, h: height - HORIZON } });
+    addColorGrade(this, 0xfff2d0, 0.06);
+    addVignette(this, 0.4);
+
+    // ── Title banner ──
+    heading(this, width / 2, 36, "Welcome home, Dad", { size: 26 });
+    this.add.text(width / 2, 64, "Walk to a signpost and press E to relive your memories", {
+      fontFamily: '"Nunito", sans-serif', fontSize: "14px", fontStyle: "600",
+      color: "#ffffff"
+    }).setOrigin(0.5).setDepth(110).setAlpha(0.85);
+
+    // ── Input ──
+    this.cursors = this.input.keyboard.createCursorKeys();
+    this.wasd = this.input.keyboard.addKeys({ up: "W", down: "S", left: "A", right: "D" });
+    this.eKey = this.input.keyboard.addKey("E");
+
+    this.cameras.main.fadeIn(700, 6, 8, 16);
   }
 
-  _createPlayer(width, height) {
-    // Placeholder rectangle player until sprite sheet is ready
-    this._player = this.add.rectangle(width / 2, height * 0.72, 24, 36, 0xf5c842)
-      .setDepth(10);
-
-    this._cursors = this.input.keyboard.createCursorKeys();
-    this._wasd    = this.input.keyboard.addKeys({ up: "W", down: "S", left: "A", right: "D" });
-    this._eKey    = this.input.keyboard.addKey("E");
+  _drawDriveway() {
+    const g = this.add.graphics().setDepth(4);
+    g.fillStyle(0xcbc6ba, 1);
+    g.fillPoints([
+      new Phaser.Geom.Point(560, HORIZON - 6),
+      new Phaser.Geom.Point(672, HORIZON - 6),
+      new Phaser.Geom.Point(900, GAME_HEIGHT),
+      new Phaser.Geom.Point(660, GAME_HEIGHT)
+    ], true);
+    g.fillStyle(0xb8b3a6, 0.6);
+    g.fillRect(0, 0, 0, 0);
+    // expansion seams
+    g.lineStyle(2, 0xa8a294, 0.5);
+    g.lineBetween(600, HORIZON + 30, 740, GAME_HEIGHT);
+    g.lineBetween(630, HORIZON + 30, 820, GAME_HEIGHT);
   }
 
-  _createUI(width) {
-    this.add.text(width / 2, 16,
-      "Walk to a door and press E to enter",
-      {
-        fontFamily: '"Press Start 2P", monospace',
-        fontSize: "9px",
-        color: "#ffffff",
-        stroke: "#000000",
-        strokeThickness: 2
-      }
-    ).setOrigin(0.5).setScrollFactor(0);
-  }
+  update(time, delta) {
+    const p = this.player;
+    let vx = 0, vy = 0;
+    if (this.cursors.left.isDown || this.wasd.left.isDown)   vx = -PLAYER_SPEED;
+    if (this.cursors.right.isDown || this.wasd.right.isDown) vx =  PLAYER_SPEED;
+    if (this.cursors.up.isDown || this.wasd.up.isDown)       vy = -PLAYER_SPEED;
+    if (this.cursors.down.isDown || this.wasd.down.isDown)   vy =  PLAYER_SPEED;
 
-  update() {
-    const speed = PLAYER_SPEED;
-    const p     = this._player;
-    const keys  = this._cursors;
-    const wasd  = this._wasd;
+    const nx = Phaser.Math.Clamp(p.x + vx * (delta / 1000), 30, GAME_WIDTH - 30);
+    const ny = Phaser.Math.Clamp(p.y + vy * (delta / 1000), HORIZON + 10, GAME_HEIGHT - 24);
+    p.setPosition(nx, ny);
+    p.setDepth(40 + ny * 0.01);
+    p.update(vx, vy, delta);
 
-    let vx = 0;
-    let vy = 0;
+    // nearest signpost hint
+    let near = null;
+    this._signs.forEach(s => {
+      const inRange = Phaser.Math.Distance.Between(p.x, p.y, s.x, s.y) < 90;
+      s.pill.setVisible(inRange);
+      if (inRange) near = s;
+    });
 
-    if (keys.left.isDown  || wasd.left.isDown)  vx = -speed;
-    if (keys.right.isDown || wasd.right.isDown) vx =  speed;
-    if (keys.up.isDown    || wasd.up.isDown)    vy = -speed;
-    if (keys.down.isDown  || wasd.down.isDown)  vy =  speed;
-
-    p.x = Phaser.Math.Clamp(p.x + vx * (1 / 60), 20, GAME_WIDTH  - 20);
-    p.y = Phaser.Math.Clamp(p.y + vy * (1 / 60), 20, GAME_HEIGHT - 20);
-
-    // Check door proximity + E press
-    if (Phaser.Input.Keyboard.JustDown(this._eKey)) {
-      this._doorZones.forEach(({ x, y, key }) => {
-        const dist = Phaser.Math.Distance.Between(p.x, p.y, x, y);
-        if (dist < 70) {
-          this.cameras.main.fadeOut(500, 0, 0, 0);
-          this.cameras.main.once("camerafadeoutcomplete", () => {
-            this.scene.start("ChapterScene", { chapter: key });
-          });
-        }
+    if (near && Phaser.Input.Keyboard.JustDown(this.eKey)) {
+      this.cameras.main.fadeOut(450, 6, 8, 16);
+      this.cameras.main.once("camerafadeoutcomplete", () => {
+        this.scene.start("ChapterScene", { chapter: near.key });
       });
     }
   }

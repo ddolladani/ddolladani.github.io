@@ -1,86 +1,61 @@
 import Phaser from "phaser";
+import { drawSky, addStars } from "../art/Scenery.js";
+import { SKY } from "../art/palette.js";
+import { addVignette, addColorGrade, addFireflies } from "../art/effects.js";
 
 const LINES = [
-  "You did it, Dad.",
-  " ",
-  "Every memory we've shared",
-  "made us who we are.",
-  " ",
-  "Thank you for every moment.",
-  "We love you.",
-  " ",
-  "— DJ & Danielle"
+  { t: "You did it, Dad.",                 s: 30, c: "#fdf3df", f: "Fredoka" },
+  { t: "Every memory we've shared",         s: 22, c: "#e8d8ff", f: "Nunito" },
+  { t: "made us who we are.",               s: 22, c: "#e8d8ff", f: "Nunito" },
+  { t: "Thank you for every moment,",       s: 22, c: "#e8d8ff", f: "Nunito" },
+  { t: "and for being our hero.",           s: 22, c: "#e8d8ff", f: "Nunito" },
+  { t: "We love you.",                      s: 26, c: "#ffd56b", f: "Fredoka" },
+  { t: "— DJ & Danielle",                   s: 30, c: "#ffd56b", f: "Caveat" }
 ];
 
 export class EndingScene extends Phaser.Scene {
-  constructor() {
-    super({ key: "EndingScene" });
-  }
+  constructor() { super({ key: "EndingScene" }); }
 
   create() {
     const { width, height } = this.scale;
 
-    this.cameras.main.setBackgroundColor("#000000");
-    this.cameras.main.fadeIn(1000, 0, 0, 0);
+    drawSky(this, SKY.night);
+    addStars(this, 110);
+    addFireflies(this, { count: 40, color: 0xffe9a8 });
+    addColorGrade(this, 0x3a4a8a, 0.12);
+    addVignette(this, 0.5);
 
-    // Soft music fade down at the end
     const music = this.sound.get("music_main");
-    if (music) {
-      this.tweens.add({ targets: music, volume: 0.2, duration: 2000 });
-    }
+    if (music) this.tweens.add({ targets: music, volume: 0.28, duration: 2500 });
 
-    const startY = height * 0.12;
-    const lineH  = 44;
+    const startY = height * 0.2;
+    const gap = 56;
 
-    LINES.forEach((line, i) => {
-      const isSignature = line.startsWith("—");
-      const text = this.add.text(width / 2, startY + i * lineH, line, {
-        fontFamily: '"Press Start 2P", monospace',
-        fontSize: isSignature ? "13px" : "12px",
-        color: isSignature ? "#ffd700" : "#ffffff",
-        align: "center",
-        wordWrap: { width: width * 0.8 }
-      })
-        .setOrigin(0.5)
-        .setAlpha(0);
-
+    LINES.forEach((ln, i) => {
+      const fam = ln.f === "Caveat" ? '"Caveat", cursive'
+                : ln.f === "Fredoka" ? '"Fredoka", sans-serif'
+                : '"Nunito", sans-serif';
+      const txt = this.add.text(width / 2, startY + i * gap, ln.t, {
+        fontFamily: fam, fontSize: `${ln.s}px`, fontStyle: "700",
+        color: ln.c, align: "center"
+      }).setOrigin(0.5).setAlpha(0);
       this.tweens.add({
-        targets: text,
-        alpha: 1,
-        duration: 900,
-        delay: 600 + i * 500,
-        ease: "Sine.easeIn"
+        targets: txt, alpha: 1, y: startY + i * gap - 4,
+        duration: 1100, delay: 700 + i * 650, ease: "Sine.easeOut"
       });
     });
 
-    // Replay prompt
-    const replay = this.add.text(width / 2, height - 36,
-      "Press ENTER to play again",
-      {
-        fontFamily: '"Press Start 2P", monospace',
-        fontSize: "9px",
-        color: "#555555"
-      }
-    ).setOrigin(0.5).setAlpha(0);
-
-    this.tweens.add({
-      targets: replay,
-      alpha: 1,
-      duration: 800,
-      delay: 600 + LINES.length * 500 + 1000
-    });
+    const replay = this.add.text(width / 2, height - 34, "Press ENTER to play again", {
+      fontFamily: '"Nunito", sans-serif', fontSize: "14px", fontStyle: "700",
+      color: "#9a93b8"
+    }).setOrigin(0.5).setAlpha(0);
+    this.tweens.add({ targets: replay, alpha: 1, duration: 900, delay: 700 + LINES.length * 650 + 800 });
 
     this.input.keyboard.once("keydown-ENTER", () => {
-      // Reset progress
-      this.registry.set("completedChapters", []);
-      this.registry.set("found_dj", []);
-      this.registry.set("found_danielle", []);
-      this.registry.set("found_together", []);
-
-      this.cameras.main.fadeOut(600, 0, 0, 0);
-      this.cameras.main.once("camerafadeoutcomplete", () => {
-        this.scene.start("TitleScene");
-      });
+      ["completedChapters", "found_dj", "found_danielle", "found_together"]
+        .forEach(k => this.registry.set(k, []));
+      this.cameras.main.fadeOut(700, 6, 8, 16);
+      this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("TitleScene"));
     });
   }
 }
