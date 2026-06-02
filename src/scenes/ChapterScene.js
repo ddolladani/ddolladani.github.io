@@ -1,9 +1,8 @@
 import Phaser from "phaser";
-import { GAME_WIDTH, GAME_HEIGHT, PLAYER_SPEED } from "../config/gameConfig.js";
+import { PLAYER_SPEED } from "../config/gameConfig.js";
 import { CHAPTER_THEME } from "../art/palette.js";
 import {
-  drawSky, addSun, addCloud, drawGround,
-  addTree, addBush, addFlowers
+  drawSky, addSun, addCloud, addTree, addBush, addFlowers
 } from "../art/Scenery.js";
 import { drawLivingRoom } from "../art/HouseInterior.js";
 import { addVignette, addColorGrade, addFireflies } from "../art/effects.js";
@@ -12,21 +11,27 @@ import { MemorySpot } from "../entities/MemorySpot.js";
 import { memories } from "../config/memories.js";
 import { heading, hintPill } from "../ui/ui.js";
 
-const HORIZON = 300;
 const MEMORY_RADIUS = 70;
+const DEPTH = { fireflies: 50000, grade: 90000, vignette: 95000, ui: 100000 };
 
+// Outdoor chapters scroll vertically; the interior is one fixed room.
+const INTERIOR_FLOOR = 300;
+const OUTDOOR_WORLD_H = 1200;
+const OUTDOOR_GROUND_TOP = 320;
+
+// Memory spot positions (outdoor ones are spread down a tall world)
 const SPOT_LAYOUTS = {
   dj: [
-    { x: 170, y: 380 }, { x: 360, y: 470 }, { x: 540, y: 380 },
-    { x: 720, y: 470 }, { x: 850, y: 380 }
+    { x: 220, y: 560 }, { x: 700, y: 650 }, { x: 380, y: 800 },
+    { x: 760, y: 940 }, { x: 240, y: 1060 }
   ],
   danielle: [
-    { x: 150, y: 400 }, { x: 330, y: 360 }, { x: 500, y: 460 },
-    { x: 680, y: 370 }, { x: 850, y: 440 }
+    { x: 260, y: 580 }, { x: 690, y: 660 }, { x: 440, y: 830 },
+    { x: 750, y: 980 }, { x: 210, y: 1070 }
   ],
   together: [
-    { x: 160, y: 420 }, { x: 340, y: 380 }, { x: 500, y: 470 },
-    { x: 660, y: 380 }, { x: 840, y: 430 }
+    { x: 180, y: 430 }, { x: 370, y: 520 }, { x: 520, y: 430 },
+    { x: 670, y: 525 }, { x: 810, y: 445 }
   ]
 };
 
@@ -37,6 +42,9 @@ export class ChapterScene extends Phaser.Scene {
     this.chapterKey = data.chapter;
     this.theme = CHAPTER_THEME[data.chapter];
     this.found = new Set(this.registry.get(`found_${data.chapter}`) || []);
+    this.isInterior = data.chapter === "together";
+    this.worldH = this.isInterior ? this.scale.height : OUTDOOR_WORLD_H;
+    this.topLimit = this.isInterior ? INTERIOR_FLOOR + 20 : OUTDOOR_GROUND_TOP + 40;
   }
 
   create() {
@@ -51,29 +59,41 @@ export class ChapterScene extends Phaser.Scene {
     layout.forEach((pos, i) => {
       const spot = new MemorySpot(this, pos.x, pos.y, i, this.theme.accent);
       spot.memData = mems[i];
+      spot.root.setDepth(pos.y);
       if (this.found.has(i)) spot.markFound();
       this.spots.push(spot);
     });
 
     // ── Character ──
-    this.player = new Character(this, width / 2, height - 60, { scale: 1.05, depth: 50 });
+    const startY = this.isInterior ? height - 70 : this.worldH - 110;
+    this.player = new Character(this, width / 2, startY, { scale: 1.1, depth: startY });
 
-    // ── UI ──
-    heading(this, width / 2, 34, `${this.theme.label}`, { size: 26 });
-    this.progressText = this.add.text(width - 20, 30,
-      `${this.found.size} / 5`, {
-        fontFamily: '"Fredoka", sans-serif', fontSize: "18px", fontStyle: "600",
-        color: "#ffffff"
-      }).setOrigin(1, 0.5).setDepth(110);
+    // ── Camera ──
+    if (!this.isInterior) {
+      this.cameras.main.setBounds(0, 0, width, this.worldH);
+      this.cameras.main.startFollow(this.player.root, true, 0.12, 0.12);
+      this.cameras.main.setDeadzone(width, 150);
+    }
+
+    // ── Overlays (fixed to screen) ──
+    const area = { x: 0, y: this.isInterior ? 80 : OUTDOOR_GROUND_TOP, w: width, h: this.worldH };
+    addFireflies(this, { count: this.isInterior ? 16 : 22, color: this._moteColor(), depth: DEPTH.fireflies, area });
+    addColorGrade(this, this._gradeColor(), 0.08).setDepth(DEPTH.grade);
+    addVignette(this, 0.45).setDepth(DEPTH.vignette);
+
+    // ── UI (fixed) ──
+    const h = heading(this, width / 2, 34, this.theme.label, { size: 26 });
+    h.t.setScrollFactor(0).setDepth(DEPTH.ui);
+    h.shadow.setScrollFactor(0).setDepth(DEPTH.ui);
+    this.progressText = this.add.text(width - 20, 30, `${this.found.size} / 5`, {
+      fontFamily: '"Fredoka", sans-serif', fontSize: "18px", fontStyle: "600", color: "#ffffff"
+    }).setOrigin(1, 0.5).setScrollFactor(0).setDepth(DEPTH.ui);
     this.add.text(20, 30, "ESC  ·  back to 1166", {
-      fontFamily: '"Nunito", sans-serif', fontSize: "13px", fontStyle: "600",
-      color: "#ffffff"
-    }).setOrigin(0, 0.5).setDepth(110).setAlpha(0.7);
+      fontFamily: '"Nunito", sans-serif', fontSize: "13px", fontStyle: "600", color: "#ffffff"
+    }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(DEPTH.ui).setAlpha(0.7);
 
     this.hint = hintPill(this, 0, 0, "Press  E  to revisit", { accent: this.theme.accent });
     this.hint.setVisible(false);
-
-    addVignette(this, 0.45);
 
     // ── Input ──
     this.cursors = this.input.keyboard.createCursorKeys();
@@ -81,10 +101,7 @@ export class ChapterScene extends Phaser.Scene {
     this.eKey = this.input.keyboard.addKey("E");
     this.escKey = this.input.keyboard.addKey("ESC");
 
-    // chapters already finished can be freely revisited without re-triggering
     this.completedOnce = this.found.size >= 5;
-
-    // memory closed → mark found (memories can be re-opened any number of times)
     this.events.on("memory-closed", ({ chapter, index }) => {
       const wasNew = !this.found.has(index);
       this.found.add(index);
@@ -100,51 +117,65 @@ export class ChapterScene extends Phaser.Scene {
     this.cameras.main.fadeIn(700, 6, 8, 16);
   }
 
-  _buildEnvironment(width, height) {
-    const t = this.theme;
+  _moteColor()  { return this.isInterior ? 0xffe2b0 : (this.chapterKey === "danielle" ? 0xffd9a8 : 0xfff6c0); }
+  _gradeColor() { return this.isInterior ? 0xffcf8f : (this.chapterKey === "danielle" ? 0xffcf9a : 0xfff6d0); }
 
-    // Together is entered through the front door → inside the house.
-    if (this.chapterKey === "together") {
-      drawLivingRoom(this, { floorY: HORIZON });
-      // soft floating dust motes in the warm light
-      addFireflies(this, { count: 16, color: 0xffe2b0,
-        area: { x: 0, y: 80, w: width, h: height - 120 } });
-      addColorGrade(this, 0xffcf8f, 0.07);
+  _buildEnvironment(width, height) {
+    if (this.isInterior) {
+      drawLivingRoom(this, { floorY: INTERIOR_FLOOR });
       return;
     }
 
-    // DJ and Danielle remain outdoors.
-    drawSky(this, t.sky);
+    // ── Outdoor: tall vertical-scroll world ──
+    drawSky(this, this.theme.sky);
     if (this.chapterKey === "dj") {
-      addSun(this, 800, 110, { radius: 38 });
+      const sun = addSun(this, 800, 110, { radius: 38 });
+      sun.halo.setScrollFactor(0); sun.disc.setScrollFactor(0);
       addCloud(this, 200, 90, 0.9);
       addCloud(this, 560, 70, 0.7);
     } else {
-      addSun(this, 480, 150, { color: 0xfff0d0, glow: 0xffb877, radius: 46 });
+      const sun = addSun(this, 480, 140, { color: 0xfff0d0, glow: 0xffb877, radius: 46 });
+      sun.halo.setScrollFactor(0); sun.disc.setScrollFactor(0);
       addCloud(this, 720, 80, 0.8);
     }
 
-    drawGround(this, t.ground, HORIZON);
+    this._drawTallGround();
 
     if (this.chapterKey === "dj") {
-      addTree(this, 70, HORIZON + 30, { scale: 1.2, depth: 8 });
-      addTree(this, 910, HORIZON + 20, { scale: 1.0, depth: 8 });
-      addBush(this, 470, HORIZON + 8, { scale: 0.8, depth: 9 });
-      for (let i = 0; i < 6; i++) addFlowers(this, 80 + i * 150, HORIZON + 50, 9);
+      addTree(this, 70, OUTDOOR_GROUND_TOP + 120, { scale: 1.5, depth: OUTDOOR_GROUND_TOP + 120 });
+      addTree(this, 920, 700, { scale: 1.7, depth: 700 });
+      addTree(this, 120, 1000, { scale: 1.3, depth: 1000 });
+      addBush(this, 520, OUTDOOR_GROUND_TOP + 30, { scale: 0.9, depth: OUTDOOR_GROUND_TOP + 30 });
+      [[300, 520], [780, 600], [180, 760], [640, 880], [430, 1020], [820, 1100]]
+        .forEach(([x, y]) => addFlowers(this, x, y, y));
     } else {
-      addTree(this, 850, HORIZON + 24, { scale: 1.1, depth: 8,
-        foliage: [0x6a8a3a, 0x7fa148, 0x8db854] });
-      addBush(this, 120, HORIZON + 14, { scale: 0.9, depth: 9, color: 0x7a9a48, dark: 0x5f7e36 });
-      addBush(this, 760, HORIZON + 16, { scale: 0.7, depth: 9, color: 0x7a9a48, dark: 0x5f7e36 });
-      for (let i = 0; i < 10; i++) addFlowers(this, 60 + i * 95, HORIZON + 30 + (i % 3) * 18, 9);
+      const gardenGreen = [0x6a8a3a, 0x7fa148, 0x8db854];
+      addTree(this, 900, OUTDOOR_GROUND_TOP + 90, { scale: 1.5, depth: OUTDOOR_GROUND_TOP + 90, foliage: gardenGreen });
+      addTree(this, 80, 820, { scale: 1.3, depth: 820, foliage: gardenGreen });
+      addBush(this, 160, OUTDOOR_GROUND_TOP + 24, { scale: 1.0, depth: OUTDOOR_GROUND_TOP + 24, color: 0x7a9a48, dark: 0x5f7e36 });
+      addBush(this, 720, 640, { scale: 0.8, depth: 640, color: 0x7a9a48, dark: 0x5f7e36 });
+      // a garden full of flowers
+      for (let i = 0; i < 22; i++) {
+        addFlowers(this, 60 + Math.random() * 840, OUTDOOR_GROUND_TOP + 40 + Math.random() * (OUTDOOR_WORLD_H - OUTDOOR_GROUND_TOP - 80));
+      }
     }
+  }
 
-    if (this.chapterKey === "danielle") {
-      addFireflies(this, { count: 20, color: 0xffd9a8, area: { x: 0, y: HORIZON, w: width, h: height - HORIZON } });
-      addColorGrade(this, 0xffcf9a, 0.1);
-    } else {
-      addFireflies(this, { count: 16, color: 0xfff6c0, area: { x: 0, y: HORIZON, w: width, h: height - HORIZON } });
-      addColorGrade(this, 0xfff6d0, 0.05);
+  _drawTallGround() {
+    const { width } = this.scale;
+    const pal = this.theme.ground;
+    const g = this.add.graphics().setDepth(-70);
+    g.fillGradientStyle(pal.top, pal.top, pal.bot, pal.bot, 1);
+    g.fillRect(0, OUTDOOR_GROUND_TOP, width, this.worldH - OUTDOOR_GROUND_TOP);
+    g.fillStyle(pal.top, 0.5);
+    g.fillRect(0, OUTDOOR_GROUND_TOP, width, 12);
+    const t = this.add.graphics().setDepth(-69);
+    for (let i = 0; i < 300; i++) {
+      const x = Math.random() * width;
+      const y = OUTDOOR_GROUND_TOP + 14 + Math.random() * (this.worldH - OUTDOOR_GROUND_TOP - 14);
+      t.fillStyle(0xffffff, 0.05);
+      const hh = 3 + Math.random() * 5;
+      t.fillTriangle(x, y, x + 2, y - hh, x + 4, y);
     }
   }
 
@@ -154,12 +185,10 @@ export class ChapterScene extends Phaser.Scene {
       completed.push(this.chapterKey);
       this.registry.set("completedChapters", completed);
     }
-    // little celebratory beat before returning
-    this.add.text(this.scale.width / 2, this.scale.height / 2,
-      "Chapter complete  💛", {
-        fontFamily: '"Fredoka", sans-serif', fontSize: "30px", fontStyle: "700",
-        color: "#ffe6ac", stroke: "#000000", strokeThickness: 4
-      }).setOrigin(0.5).setDepth(200).setScrollFactor(0);
+    this.add.text(this.scale.width / 2, this.scale.height / 2, "Chapter complete  💛", {
+      fontFamily: '"Fredoka", sans-serif', fontSize: "30px", fontStyle: "700",
+      color: "#ffe6ac", stroke: "#000000", strokeThickness: 4
+    }).setOrigin(0.5).setDepth(DEPTH.ui).setScrollFactor(0);
     this.time.delayedCall(1500, () => {
       this.cameras.main.fadeOut(700, 6, 8, 16);
       this.cameras.main.once("camerafadeoutcomplete", () => {
@@ -176,13 +205,12 @@ export class ChapterScene extends Phaser.Scene {
     if (this.cursors.up.isDown || this.wasd.up.isDown)       vy = -PLAYER_SPEED;
     if (this.cursors.down.isDown || this.wasd.down.isDown)   vy =  PLAYER_SPEED;
 
-    const nx = Phaser.Math.Clamp(p.x + vx * (delta / 1000), 30, GAME_WIDTH - 30);
-    const ny = Phaser.Math.Clamp(p.y + vy * (delta / 1000), HORIZON + 20, GAME_HEIGHT - 24);
+    const nx = Phaser.Math.Clamp(p.x + vx * (delta / 1000), 28, this.scale.width - 28);
+    const ny = Phaser.Math.Clamp(p.y + vy * (delta / 1000), this.topLimit, this.worldH - 30);
     p.setPosition(nx, ny);
-    p.setDepth(40 + ny * 0.01);
+    p.setDepth(ny);
     p.update(vx, vy, delta);
 
-    // nearest memory (found ones stay open-able so he can revisit any time)
     let near = null, nearDist = Infinity;
     for (const s of this.spots) {
       const d = s.distanceTo(p.x, p.y);
@@ -199,10 +227,8 @@ export class ChapterScene extends Phaser.Scene {
     if (near && Phaser.Input.Keyboard.JustDown(this.eKey)) {
       this.input.keyboard.resetKeys();
       this.scene.launch("MemoryScene", {
-        chapter: this.chapterKey,
-        index: near.index,
-        memData: near.memData,
-        callerScene: "ChapterScene"
+        chapter: this.chapterKey, index: near.index,
+        memData: near.memData, callerScene: "ChapterScene"
       });
     }
 
