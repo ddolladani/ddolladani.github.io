@@ -19,7 +19,7 @@ export class TitleScene extends Phaser.Scene {
     const house = addHouse1166(this, width / 2 - 192, 150, { scale: 0.62, depth: 5, lit: true });
     house.setAlpha(0.96);
 
-    addFireflies(this, { count: 30, color: 0xffe2a0 });
+    addFireflies(this, { count: 18, color: 0xffe2a0 });
     addColorGrade(this, 0x5a3a6a, 0.14);
     addVignette(this, 0.55);
 
@@ -30,8 +30,8 @@ export class TitleScene extends Phaser.Scene {
 
     // glow behind title
     const key = ensureGlowTexture(this);
-    this.add.image(width / 2, height * 0.30, key).setScale(9, 5)
-      .setTint(0xffd56b).setAlpha(0.25).setBlendMode(Phaser.BlendModes.ADD).setDepth(100);
+    this.add.image(width / 2, height * 0.30, key).setScale(8, 4)
+      .setTint(0xffd56b).setAlpha(0.14).setBlendMode(Phaser.BlendModes.ADD).setDepth(100);
 
     // Title
     const shadow = this.add.text(width / 2 + 3, height * 0.27 + 4, "DAD", {

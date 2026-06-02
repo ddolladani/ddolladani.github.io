@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { PLAYER_SPEED } from "../config/gameConfig.js";
 import { CHAPTER_THEME } from "../art/palette.js";
 import {
-  drawSky, addSun, addCloud, addTree, addBush, addFlowers
+  drawSky, addSun, addCloud, addTree, addBush, addFlowers, addTreehouse
 } from "../art/Scenery.js";
 import { drawLivingRoom } from "../art/HouseInterior.js";
 import { addVignette, addColorGrade, addFireflies } from "../art/effects.js";
@@ -117,53 +117,89 @@ export class ChapterScene extends Phaser.Scene {
     this.cameras.main.fadeIn(700, 6, 8, 16);
   }
 
-  _moteColor()  { return this.isInterior ? 0xffe2b0 : (this.chapterKey === "danielle" ? 0xffd9a8 : 0xfff6c0); }
-  _gradeColor() { return this.isInterior ? 0xffcf8f : (this.chapterKey === "danielle" ? 0xffcf9a : 0xfff6d0); }
+  _moteColor() {
+    if (this.isInterior) return 0xffe2b0;
+    if (this.chapterKey === "danielle") return 0xffd9a8;
+    return 0xe6eaa6; // dj forest: soft green-gold pollen
+  }
+  _gradeColor() {
+    if (this.isInterior) return 0xffcf8f;
+    if (this.chapterKey === "danielle") return 0xffcf9a;
+    return 0xcfe0a8; // dj forest: gentle green wash
+  }
 
   _buildEnvironment(width, height) {
-    if (this.isInterior) {
-      drawLivingRoom(this, { floorY: INTERIOR_FLOOR });
-      return;
-    }
+    if (this.isInterior) { drawLivingRoom(this, { floorY: INTERIOR_FLOOR }); return; }
+    if (this.chapterKey === "dj") { this._buildForest(width); return; }
+    this._buildGarden(width);
+  }
 
-    // ── Outdoor: tall vertical-scroll world ──
+  // DJ's world is up in the trees — a dense, sun-dappled wood with a treehouse.
+  _buildForest(width) {
+    const FGREEN = [0x244a23, 0x315c2e, 0x3f6e3a];
     drawSky(this, this.theme.sky);
-    if (this.chapterKey === "dj") {
-      const sun = addSun(this, 800, 110, { radius: 38 });
-      sun.halo.setScrollFactor(0); sun.disc.setScrollFactor(0);
-      addCloud(this, 200, 90, 0.9);
-      addCloud(this, 560, 70, 0.7);
-    } else {
-      const sun = addSun(this, 480, 140, { color: 0xfff0d0, glow: 0xffb877, radius: 46 });
-      sun.halo.setScrollFactor(0); sun.disc.setScrollFactor(0);
-      addCloud(this, 720, 80, 0.8);
+
+    // dense forest edge across the far top so the sky barely peeks through
+    const edge = this.add.graphics().setDepth(-72);
+    for (let x = -20; x < width + 40; x += 46) {
+      const r = Phaser.Math.Between(54, 88);
+      edge.fillStyle(0x1f3d20, 1); edge.fillCircle(x, OUTDOOR_GROUND_TOP - 20, r);
+      edge.fillStyle(0x2a4d28, 1); edge.fillCircle(x + 16, OUTDOOR_GROUND_TOP - 36, r * 0.7);
     }
+    edge.fillStyle(0x1f3d20, 1); edge.fillRect(0, 0, width, OUTDOOR_GROUND_TOP - 24);
+
+    // mossy forest floor
+    this._drawTallGround({ top: 0x59693a, bot: 0x3a4a24 });
+
+    // big trees crowding both sides + a few mid trees, all depth-sorted
+    const T = (x, y, s) => addTree(this, x, y, { scale: s, depth: y, foliage: FGREEN });
+    T(36, 520, 1.9);  T(60, 820, 2.2);  T(20, 1080, 1.8);
+    T(936, 560, 2.0); T(956, 900, 2.3); T(910, 1140, 1.8);
+    T(250, 470, 1.2); T(720, 470, 1.3);
+
+    // the treehouse — centerpiece
+    addTreehouse(this, 470, 770, { scale: 1.2, depth: 770 });
+
+    // ferns / undergrowth
+    [[150, 980], [820, 1020], [360, 1120], [640, 1160], [200, 640]]
+      .forEach(([x, y]) => addBush(this, x, y, { scale: 0.7, depth: y, color: 0x3f6e3a, dark: 0x2a4d28 }));
+
+    // a couple of very soft dappled light shafts (kept subtle)
+    const shafts = this.add.graphics().setDepth(-66);
+    [[300, 0.05], [620, 0.04]].forEach(([sx, a]) => {
+      shafts.fillStyle(0xfff3c0, a);
+      shafts.fillPoints([
+        new Phaser.Geom.Point(sx, OUTDOOR_GROUND_TOP),
+        new Phaser.Geom.Point(sx + 70, OUTDOOR_GROUND_TOP),
+        new Phaser.Geom.Point(sx + 160, this.worldH),
+        new Phaser.Geom.Point(sx - 30, this.worldH)
+      ], true);
+    });
+  }
+
+  // Danielle's world — a flower garden at golden hour.
+  _buildGarden(width) {
+    drawSky(this, this.theme.sky);
+    const sun = addSun(this, 480, 140, { color: 0xfff0d0, glow: 0xffb877, radius: 46 });
+    sun.halo.setScrollFactor(0); sun.disc.setScrollFactor(0);
+    addCloud(this, 720, 80, 0.8);
 
     this._drawTallGround();
 
-    if (this.chapterKey === "dj") {
-      addTree(this, 70, OUTDOOR_GROUND_TOP + 120, { scale: 1.5, depth: OUTDOOR_GROUND_TOP + 120 });
-      addTree(this, 920, 700, { scale: 1.7, depth: 700 });
-      addTree(this, 120, 1000, { scale: 1.3, depth: 1000 });
-      addBush(this, 520, OUTDOOR_GROUND_TOP + 30, { scale: 0.9, depth: OUTDOOR_GROUND_TOP + 30 });
-      [[300, 520], [780, 600], [180, 760], [640, 880], [430, 1020], [820, 1100]]
-        .forEach(([x, y]) => addFlowers(this, x, y, y));
-    } else {
-      const gardenGreen = [0x6a8a3a, 0x7fa148, 0x8db854];
-      addTree(this, 900, OUTDOOR_GROUND_TOP + 90, { scale: 1.5, depth: OUTDOOR_GROUND_TOP + 90, foliage: gardenGreen });
-      addTree(this, 80, 820, { scale: 1.3, depth: 820, foliage: gardenGreen });
-      addBush(this, 160, OUTDOOR_GROUND_TOP + 24, { scale: 1.0, depth: OUTDOOR_GROUND_TOP + 24, color: 0x7a9a48, dark: 0x5f7e36 });
-      addBush(this, 720, 640, { scale: 0.8, depth: 640, color: 0x7a9a48, dark: 0x5f7e36 });
-      // a garden full of flowers
-      for (let i = 0; i < 22; i++) {
-        addFlowers(this, 60 + Math.random() * 840, OUTDOOR_GROUND_TOP + 40 + Math.random() * (OUTDOOR_WORLD_H - OUTDOOR_GROUND_TOP - 80));
-      }
+    const gardenGreen = [0x6a8a3a, 0x7fa148, 0x8db854];
+    addTree(this, 900, OUTDOOR_GROUND_TOP + 90, { scale: 1.6, depth: OUTDOOR_GROUND_TOP + 90, foliage: gardenGreen });
+    addTree(this, 80, 820, { scale: 1.4, depth: 820, foliage: gardenGreen });
+    addBush(this, 160, OUTDOOR_GROUND_TOP + 24, { scale: 1.0, depth: OUTDOOR_GROUND_TOP + 24, color: 0x7a9a48, dark: 0x5f7e36 });
+    addBush(this, 720, 640, { scale: 0.8, depth: 640, color: 0x7a9a48, dark: 0x5f7e36 });
+    for (let i = 0; i < 22; i++) {
+      addFlowers(this, 60 + Math.random() * 840,
+        OUTDOOR_GROUND_TOP + 40 + Math.random() * (OUTDOOR_WORLD_H - OUTDOOR_GROUND_TOP - 80));
     }
   }
 
-  _drawTallGround() {
+  _drawTallGround(palOverride) {
     const { width } = this.scale;
-    const pal = this.theme.ground;
+    const pal = palOverride || this.theme.ground;
     const g = this.add.graphics().setDepth(-70);
     g.fillGradientStyle(pal.top, pal.top, pal.bot, pal.bot, 1);
     g.fillRect(0, OUTDOOR_GROUND_TOP, width, this.worldH - OUTDOOR_GROUND_TOP);

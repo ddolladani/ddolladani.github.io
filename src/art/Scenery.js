@@ -21,14 +21,14 @@ export function addSun(scene, x, y, opts = {}) {
   const { color = 0xfff3c4, glow = 0xffe9a8, radius = 34, depth = -90 } = opts;
   const key = ensureGlowTexture(scene);
   const halo = scene.add.image(x, y, key)
-    .setScale(radius / 12)
+    .setScale(radius / 14)
     .setTint(glow)
-    .setAlpha(0.55)
+    .setAlpha(0.3)
     .setDepth(depth)
     .setBlendMode(Phaser.BlendModes.ADD);
   const disc = scene.add.circle(x, y, radius, color).setDepth(depth);
   scene.tweens.add({
-    targets: halo, scale: radius / 11, alpha: 0.7,
+    targets: halo, scale: radius / 13, alpha: 0.4,
     duration: 3500, yoyo: true, repeat: -1, ease: "Sine.easeInOut"
   });
   return { halo, disc };
@@ -198,6 +198,64 @@ export function addFlowers(scene, x, y, depth = 1) {
     g.fillCircle(fx, fy, Phaser.Math.FloatBetween(1.4, 2.4));
   }
   c.add(g);
+  return c;
+}
+
+// ── Treehouse: trunk + plank platform, railing, roof, and ladder ──────────
+export function addTreehouse(scene, x, y, opts = {}) {
+  const { scale = 1, depth = 0 } = opts;
+  const WOOD = 0x7a5230, WOOD_D = 0x5e3d22, WOOD_L = 0x946541, ROOF = 0x6b4a2f;
+  const c = scene.add.container(x, y).setDepth(depth);
+  const g = scene.add.graphics();
+
+  // thick trunk
+  g.fillStyle(WOOD_D, 1); g.fillRect(-26, -150, 52, 156);
+  g.fillStyle(WOOD, 1);   g.fillRect(-26, -150, 34, 156);
+  g.lineStyle(2, WOOD_D, 0.6);
+  g.lineBetween(-10, -150, -10, 6); g.lineBetween(8, -150, 8, 6);
+
+  // platform
+  g.fillStyle(WOOD_D, 1); g.fillRect(-92, -150, 184, 16);
+  g.fillStyle(WOOD, 1);   g.fillRect(-92, -152, 184, 8);
+  // plank seams
+  g.lineStyle(1, WOOD_D, 0.5);
+  for (let px = -88; px < 92; px += 16) g.lineBetween(px, -152, px, -136);
+  // support brace
+  g.lineStyle(7, WOOD, 1);
+  g.lineBetween(-70, -136, -30, -100); g.lineBetween(70, -136, 30, -100);
+
+  // cabin wall
+  g.fillStyle(WOOD_L, 1); g.fillRoundedRect(-72, -252, 144, 102, 6);
+  g.fillStyle(WOOD, 1);   g.fillRoundedRect(-72, -252, 90, 102, 6);
+  g.lineStyle(1, WOOD_D, 0.5);
+  for (let py = -244; py < -150; py += 14) g.lineBetween(-72, py, 72, py);
+  // door + window
+  g.fillStyle(WOOD_D, 1); g.fillRoundedRect(-20, -214, 36, 64, 4);
+  g.fillStyle(0x2c3e50, 1); g.fillRect(28, -226, 30, 28);
+  g.lineStyle(3, WOOD_L, 1); g.strokeRect(28, -226, 30, 28);
+  g.lineBetween(43, -226, 43, -198); g.lineBetween(28, -212, 58, -212);
+
+  // A-frame roof
+  g.fillStyle(ROOF, 1);
+  g.fillTriangle(-86, -252, 0, -300, 86, -252);
+  g.fillStyle(0x53371f, 1);
+  g.fillTriangle(0, -300, 86, -252, 0, -252);
+
+  // little railing posts on the exposed left edge of the platform
+  g.fillStyle(WOOD, 1);
+  g.fillRect(-90, -168, 4, 18);
+  g.fillRect(-74, -168, 4, 18);
+  g.lineStyle(4, WOOD, 1);
+  g.lineBetween(-92, -168, -70, -168);
+
+  // ladder to the ground
+  g.fillStyle(WOOD, 1);
+  g.fillRect(34, -134, 4, 134); g.fillRect(58, -134, 4, 134);
+  g.lineStyle(4, WOOD_L, 1);
+  for (let ry = -120; ry < 6; ry += 20) g.lineBetween(34, ry, 62, ry);
+
+  c.add(g);
+  c.setScale(scale);
   return c;
 }
 

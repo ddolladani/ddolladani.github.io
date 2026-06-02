@@ -7,9 +7,9 @@ export function ensureGlowTexture(scene, key = "soft-glow", size = 128) {
   const ctx = c.getContext();
   const r = size / 2;
   const grad = ctx.createRadialGradient(r, r, 0, r, r, r);
-  grad.addColorStop(0,    "rgba(255,255,255,1)");
-  grad.addColorStop(0.35, "rgba(255,255,255,0.55)");
-  grad.addColorStop(0.7,  "rgba(255,255,255,0.15)");
+  grad.addColorStop(0,    "rgba(255,255,255,0.8)");
+  grad.addColorStop(0.35, "rgba(255,255,255,0.32)");
+  grad.addColorStop(0.7,  "rgba(255,255,255,0.08)");
   grad.addColorStop(1,    "rgba(255,255,255,0)");
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, size, size);
@@ -70,8 +70,8 @@ export function addFireflies(scene, opts = {}) {
   const {
     count = 26,
     color = 0xffe9a8,
-    minAlpha = 0.15,
-    maxAlpha = 0.7,
+    minAlpha = 0.06,
+    maxAlpha = 0.34,
     depth = 800,
     area = null
   } = opts;
@@ -82,7 +82,7 @@ export function addFireflies(scene, opts = {}) {
   for (let i = 0; i < count; i++) {
     const x = bounds.x + Math.random() * bounds.w;
     const y = bounds.y + Math.random() * bounds.h;
-    const s = Phaser.Math.FloatBetween(0.18, 0.5);
+    const s = Phaser.Math.FloatBetween(0.14, 0.36);
     const dot = scene.add.image(x, y, key)
       .setScale(s)
       .setTint(color)

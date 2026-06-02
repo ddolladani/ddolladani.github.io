@@ -92,8 +92,8 @@ function drawArchedWindow(scene, cx, top, w, h, glowKey) {
   const sill = top + h;
 
   // warm evening light spilling in
-  scene.add.image(cx, top + h * 0.4, glowKey).setScale(w / 18)
-    .setTint(0xffdf9a).setAlpha(0.3).setBlendMode(Phaser.BlendModes.ADD).setDepth(-63);
+  scene.add.image(cx, top + h * 0.4, glowKey).setScale(w / 22)
+    .setTint(0xffdf9a).setAlpha(0.16).setBlendMode(Phaser.BlendModes.ADD).setDepth(-63);
 
   // glass (arched top + rectangular body) — warm gradient sky outside
   g.fillStyle(0xf6d49a, 1);
@@ -149,8 +149,8 @@ function drawFireplace(scene, cx, floorY, glowKey) {
   g.fillRect(fbX, fbY, fbW, fbH);
 
   // fire glow
-  scene.add.image(cx, fbY + fbH - 18, glowKey).setScale(3.4)
-    .setTint(0xff9a3c).setAlpha(0.55).setBlendMode(Phaser.BlendModes.ADD).setDepth(-54);
+  scene.add.image(cx, fbY + fbH - 18, glowKey).setScale(2.6)
+    .setTint(0xff9a3c).setAlpha(0.3).setBlendMode(Phaser.BlendModes.ADD).setDepth(-54);
 
   // logs + flames
   g.fillStyle(0x5e3a22, 1);

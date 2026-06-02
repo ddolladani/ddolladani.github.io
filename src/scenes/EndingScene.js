@@ -21,7 +21,7 @@ export class EndingScene extends Phaser.Scene {
 
     drawSky(this, SKY.night);
     addStars(this, 110);
-    addFireflies(this, { count: 40, color: 0xffe9a8 });
+    addFireflies(this, { count: 24, color: 0xffe9a8 });
     addColorGrade(this, 0x3a4a8a, 0.12);
     addVignette(this, 0.5);
 

@@ -19,12 +19,12 @@ export class MemorySpot {
     const key = ensureGlowTexture(scene);
 
     // light pool on the ground
-    this.pool = scene.add.image(0, 18, key).setScale(1.6)
-      .setTint(accent).setAlpha(0.35).setBlendMode(Phaser.BlendModes.ADD);
+    this.pool = scene.add.image(0, 18, key).setScale(1.3)
+      .setTint(accent).setAlpha(0.18).setBlendMode(Phaser.BlendModes.ADD);
 
-    // big soft glow halo
-    this.glow = scene.add.image(0, -18, key).setScale(2.0)
-      .setTint(accent).setAlpha(0.4).setBlendMode(Phaser.BlendModes.ADD);
+    // soft glow halo
+    this.glow = scene.add.image(0, -18, key).setScale(1.5)
+      .setTint(accent).setAlpha(0.22).setBlendMode(Phaser.BlendModes.ADD);
 
     // floating frame
     this.frame = scene.add.container(0, -18);
@@ -60,8 +60,8 @@ export class MemorySpot {
       duration: 1600, yoyo: true, repeat: -1, ease: "Sine.easeInOut"
     });
     this.glowTween = scene.tweens.add({
-      targets: this.glow, scale: 2.5, alpha: 0.6,
-      duration: 1400, yoyo: true, repeat: -1, ease: "Sine.easeInOut"
+      targets: this.glow, scale: 1.85, alpha: 0.34,
+      duration: 1600, yoyo: true, repeat: -1, ease: "Sine.easeInOut"
     });
     this.frame.setAngle(-3);
     scene.tweens.add({

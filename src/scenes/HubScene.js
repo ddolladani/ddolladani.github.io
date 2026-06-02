@@ -58,11 +58,14 @@ export class HubScene extends Phaser.Scene {
     addBush(this, 600, HOUSE_BASE - 6, { scale: 0.7, depth: HOUSE_BASE + 1 });
     addBush(this, 305, HOUSE_BASE - 4, { scale: 0.6, depth: HOUSE_BASE + 1 });
 
-    // ── DJ: the big tree, front-left, spilling off screen ──
-    addTree(this, TREE.x, TREE.y, { scale: 2.2, depth: TREE.y, foliage: [FOLIAGE.treeC, FOLIAGE.treeA, FOLIAGE.treeB] });
+    // porch light — on only when the house (Together) is unlocked
+    this._addPorchLights(this.togetherUnlocked);
+
+    // ── DJ: the big staple tree, front-left, spilling off screen ──
+    addTree(this, TREE.x, TREE.y, { scale: 3.7, depth: TREE.y, foliage: [FOLIAGE.treeC, FOLIAGE.treeA, FOLIAGE.treeB] });
     // a few midground trees for depth
-    addTree(this, 880, 720, { scale: 1.3, depth: 720 });
-    addTree(this, 60, 560, { scale: 1.0, depth: 560 });
+    addTree(this, 900, 740, { scale: 1.4, depth: 740 });
+    addTree(this, 50, 600, { scale: 1.1, depth: 600 });
 
     // scattered foliage
     [[250, 520], [700, 600], [430, 700], [820, 980], [180, 860], [560, 1050], [350, 1180]]
@@ -122,12 +125,12 @@ export class HubScene extends Phaser.Scene {
     if (!signObj) {
       // glowing pedestal marker (tree / door)
       const c = this.add.container(x, y).setDepth(y);
-      const glow = this.add.image(0, 0, "soft-glow").setScale(2.4)
-        .setTint(locked ? 0x9aa0b0 : accent).setAlpha(locked ? 0.25 : 0.5)
+      const glow = this.add.image(0, 0, "soft-glow").setScale(1.9)
+        .setTint(locked ? 0x9aa0b0 : accent).setAlpha(locked ? 0.14 : 0.28)
         .setBlendMode(Phaser.BlendModes.ADD);
       c.add(glow);
       if (!locked) {
-        this.tweens.add({ targets: glow, scale: 3.0, alpha: 0.7, duration: 1500, yoyo: true, repeat: -1 });
+        this.tweens.add({ targets: glow, scale: 2.4, alpha: 0.42, duration: 1600, yoyo: true, repeat: -1 });
       }
       const tag = this.add.text(0, -54, locked ? `🔒 ${label}` : label, {
         fontFamily: '"Fredoka", sans-serif', fontSize: "16px", fontStyle: "600",
@@ -147,6 +150,34 @@ export class HubScene extends Phaser.Scene {
     pill.setDepth(y).setVisible(false);
     e.pill = pill;
     this.entries.push(e);
+  }
+
+  // Two carriage-style sconces flanking the front door. They glow warmly when
+  // the house is unlocked, and sit dark when it's still locked.
+  _addPorchLights(on) {
+    const depth = HOUSE_BASE + 3;
+    [-46, 46].forEach((dx) => {
+      const lx = DOOR.x + dx, ly = DOOR.y - 64;
+      const g = this.add.graphics().setDepth(depth);
+      // bracket + lantern body
+      g.fillStyle(0x2b2b2b, 1); g.fillRect(lx - 1, ly - 16, 2, 10);
+      g.fillStyle(0x35302a, 1); g.fillRoundedRect(lx - 6, ly - 6, 12, 18, 3);
+      // glass
+      g.fillStyle(on ? 0xffe6a3 : 0x4a4a4a, 1);
+      g.fillRoundedRect(lx - 4, ly - 4, 8, 14, 2);
+      // cap
+      g.fillStyle(0x2b2b2b, 1); g.fillTriangle(lx - 7, ly - 6, lx, ly - 13, lx + 7, ly - 6);
+
+      if (on) {
+        const glow = this.add.image(lx, ly + 2, "soft-glow").setScale(1.3)
+          .setTint(0xffd483).setAlpha(0.4).setBlendMode(Phaser.BlendModes.ADD).setDepth(depth);
+        // soft downward light spill onto the porch
+        const spill = this.add.image(lx, ly + 30, "soft-glow").setScale(1.6, 2.2)
+          .setTint(0xffcf7a).setAlpha(0.16).setBlendMode(Phaser.BlendModes.ADD).setDepth(depth);
+        this.tweens.add({ targets: [glow, spill], alpha: "-=0.08", duration: 1700,
+          yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+      }
+    });
   }
 
   _drawWorldGround() {

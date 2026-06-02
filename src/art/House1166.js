@@ -145,7 +145,7 @@ function addWindow(scene, parent, x, y, w, h, lit) {
   if (lit) {
     const key = ensureGlowTexture(scene);
     const glow = scene.add.image(w / 2, h / 2, key)
-      .setScale(w / 26).setTint(0xffd98a).setAlpha(0.32)
+      .setScale(w / 30).setTint(0xffd98a).setAlpha(0.16)
       .setBlendMode(Phaser.BlendModes.ADD);
     win.addAt(glow, 0);
   }
@@ -209,7 +209,7 @@ function addEntry(scene, parent, x, y, lit) {
   if (lit) {
     const key = ensureGlowTexture(scene);
     parent.add(scene.add.image(dx + doorW / 2, dy + doorH, key)
-      .setScale(3.5).setTint(0xffdf9a).setAlpha(0.22)
+      .setScale(2.6).setTint(0xffdf9a).setAlpha(0.12)
       .setBlendMode(Phaser.BlendModes.ADD));
   }
 }
