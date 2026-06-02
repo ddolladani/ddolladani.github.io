@@ -1,0 +1,16 @@
+{
+  "name": "dad-the-book-of-derrick",
+  "version": "1.0.0",
+  "description": "A Father's Day adventure game for Derrick",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "phaser": "^3.90.0"
+  },
+  "devDependencies": {
+    "vite": "^8.0.16"
+  }
+}
