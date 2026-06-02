@@ -29,6 +29,7 @@ export function hintPill(scene, x, y, text, opts = {}) {
   g.lineStyle(2, accent, 0.9); g.strokeRoundedRect(-w / 2, -h / 2, w, h, h / 2);
   c.add([g, label]);
   c.setScale(0.9);
+  c.labelText = label;   // exposed so callers can swap the text
   scene.tweens.add({ targets: c, y: y - 6, duration: 900, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
   return c;
 }

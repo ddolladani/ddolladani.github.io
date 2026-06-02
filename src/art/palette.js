@@ -2,16 +2,18 @@
 // Warm, slightly desaturated, nostalgic.
 
 export const SKY = {
-  day:    { top: 0x7ec8f2, mid: 0xa9dcf5, low: 0xe9f6fb },
-  golden: { top: 0xf6a96b, mid: 0xf9c98b, low: 0xfde7c0 },
-  dusk:   { top: 0x2b2350, mid: 0x5b3f73, low: 0xc77b8b },
-  night:  { top: 0x0e1230, mid: 0x1d2350, low: 0x3a3a6b }
+  // warm late-afternoon, softer and more atmospheric (less primary-blue)
+  day:    { top: 0x6f9fc4, mid: 0xa9c6d6, low: 0xe7d9c2 },
+  golden: { top: 0xc98a5e, mid: 0xe3ab78, low: 0xf3d3a0 },
+  dusk:   { top: 0x2b2748, mid: 0x584063, low: 0xb87b7e },
+  night:  { top: 0x0c1130, mid: 0x1b2148, low: 0x35395f }
 };
 
 export const GROUND = {
-  grass:      { top: 0x7ab85a, bot: 0x4f8a3c },
-  grassDusk:  { top: 0x5f7e4a, bot: 0x3c5a30 },
-  grassNight: { top: 0x35506a, bot: 0x223648 }
+  // deeper, more natural greens with less saturation
+  grass:      { top: 0x6f9851, bot: 0x47692f },
+  grassDusk:  { top: 0x5a7344, bot: 0x39512c },
+  grassNight: { top: 0x324a5e, bot: 0x1f2f3f }
 };
 
 export const HOUSE = {
@@ -34,13 +36,14 @@ export const HOUSE = {
 };
 
 export const FOLIAGE = {
-  treeA: 0x3f7d3a,
-  treeB: 0x4f9446,
-  treeC: 0x356b32,
-  trunk: 0x6b4a2f,
-  trunkDark: 0x4f3622,
-  bush:  0x4a8a40,
-  bushDark: 0x3a6e33
+  // richer, deeper, slightly desaturated greens
+  treeA: 0x3a6b34,
+  treeB: 0x47803f,
+  treeC: 0x2c5429,
+  trunk: 0x5e442e,
+  trunkDark: 0x432f1f,
+  bush:  0x416f37,
+  bushDark: 0x30562b
 };
 
 export const UI = {

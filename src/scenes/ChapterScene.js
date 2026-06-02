@@ -69,7 +69,7 @@ export class ChapterScene extends Phaser.Scene {
       color: "#ffffff"
     }).setOrigin(0, 0.5).setDepth(110).setAlpha(0.7);
 
-    this.hint = hintPill(this, 0, 0, "Press  E  to open", { accent: this.theme.accent });
+    this.hint = hintPill(this, 0, 0, "Press  E  to revisit", { accent: this.theme.accent });
     this.hint.setVisible(false);
 
     addVignette(this, 0.45);
@@ -80,13 +80,20 @@ export class ChapterScene extends Phaser.Scene {
     this.eKey = this.input.keyboard.addKey("E");
     this.escKey = this.input.keyboard.addKey("ESC");
 
-    // memory closed → mark found
+    // chapters already finished can be freely revisited without re-triggering
+    this.completedOnce = this.found.size >= 5;
+
+    // memory closed → mark found (memories can be re-opened any number of times)
     this.events.on("memory-closed", ({ chapter, index }) => {
+      const wasNew = !this.found.has(index);
       this.found.add(index);
       this.registry.set(`found_${chapter}`, [...this.found]);
       this.spots[index]?.markFound();
       this.progressText.setText(`${this.found.size} / 5`);
-      this._checkComplete();
+      if (wasNew && this.found.size >= 5 && !this.completedOnce) {
+        this.completedOnce = true;
+        this._completeChapter();
+      }
     });
 
     this.cameras.main.fadeIn(700, 6, 8, 16);
@@ -143,14 +150,19 @@ export class ChapterScene extends Phaser.Scene {
     }
   }
 
-  _checkComplete() {
-    if (this.found.size < 5) return;
+  _completeChapter() {
     const completed = this.registry.get("completedChapters") || [];
     if (!completed.includes(this.chapterKey)) {
       completed.push(this.chapterKey);
       this.registry.set("completedChapters", completed);
     }
-    this.time.delayedCall(900, () => {
+    // little celebratory beat before returning
+    this.add.text(this.scale.width / 2, this.scale.height / 2,
+      "Chapter complete  💛", {
+        fontFamily: '"Fredoka", sans-serif', fontSize: "30px", fontStyle: "700",
+        color: "#ffe6ac", stroke: "#000000", strokeThickness: 4
+      }).setOrigin(0.5).setDepth(200).setScrollFactor(0);
+    this.time.delayedCall(1500, () => {
       this.cameras.main.fadeOut(700, 6, 8, 16);
       this.cameras.main.once("camerafadeoutcomplete", () => {
         this.scene.start(completed.length >= 3 ? "EndingScene" : "HubScene");
@@ -172,15 +184,15 @@ export class ChapterScene extends Phaser.Scene {
     p.setDepth(40 + ny * 0.01);
     p.update(vx, vy, delta);
 
-    // nearest unopened memory
+    // nearest memory (found ones stay open-able so he can revisit any time)
     let near = null, nearDist = Infinity;
     for (const s of this.spots) {
-      if (s.found) continue;
       const d = s.distanceTo(p.x, p.y);
       if (d < MEMORY_RADIUS && d < nearDist) { near = s; nearDist = d; }
     }
     if (near) {
       this.hint.setVisible(true);
+      this.hint.labelText.setText(near.found ? "Press  E  to revisit" : "Press  E  to open");
       this.hint.setPosition(near.x, near.y - 58);
     } else {
       this.hint.setVisible(false);
