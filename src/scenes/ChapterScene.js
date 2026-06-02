@@ -1,10 +1,11 @@
 import Phaser from "phaser";
 import { GAME_WIDTH, GAME_HEIGHT, PLAYER_SPEED } from "../config/gameConfig.js";
-import { CHAPTER_THEME, FOLIAGE } from "../art/palette.js";
+import { CHAPTER_THEME } from "../art/palette.js";
 import {
-  drawSky, addSun, addCloud, addStars, drawGround,
-  addTree, addBush, addFlowers, addStringLights
+  drawSky, addSun, addCloud, drawGround,
+  addTree, addBush, addFlowers
 } from "../art/Scenery.js";
+import { drawLivingRoom } from "../art/HouseInterior.js";
 import { addVignette, addColorGrade, addFireflies } from "../art/effects.js";
 import { Character } from "../entities/Character.js";
 import { MemorySpot } from "../entities/MemorySpot.js";
@@ -101,47 +102,44 @@ export class ChapterScene extends Phaser.Scene {
 
   _buildEnvironment(width, height) {
     const t = this.theme;
-    drawSky(this, t.sky);
 
+    // Together is entered through the front door → inside the house.
+    if (this.chapterKey === "together") {
+      drawLivingRoom(this, { floorY: HORIZON });
+      // soft floating dust motes in the warm light
+      addFireflies(this, { count: 16, color: 0xffe2b0,
+        area: { x: 0, y: 80, w: width, h: height - 120 } });
+      addColorGrade(this, 0xffcf8f, 0.07);
+      return;
+    }
+
+    // DJ and Danielle remain outdoors.
+    drawSky(this, t.sky);
     if (this.chapterKey === "dj") {
       addSun(this, 800, 110, { radius: 38 });
       addCloud(this, 200, 90, 0.9);
       addCloud(this, 560, 70, 0.7);
-    } else if (this.chapterKey === "danielle") {
+    } else {
       addSun(this, 480, 150, { color: 0xfff0d0, glow: 0xffb877, radius: 46 });
       addCloud(this, 720, 80, 0.8);
-    } else {
-      addStars(this, 90);
-      addSun(this, 150, 90, { color: 0xfdf6e3, glow: 0xcfd8ff, radius: 30 }); // moon
     }
 
     drawGround(this, t.ground, HORIZON);
 
-    // themed foliage
     if (this.chapterKey === "dj") {
       addTree(this, 70, HORIZON + 30, { scale: 1.2, depth: 8 });
       addTree(this, 910, HORIZON + 20, { scale: 1.0, depth: 8 });
       addBush(this, 470, HORIZON + 8, { scale: 0.8, depth: 9 });
       for (let i = 0; i < 6; i++) addFlowers(this, 80 + i * 150, HORIZON + 50, 9);
-    } else if (this.chapterKey === "danielle") {
+    } else {
       addTree(this, 850, HORIZON + 24, { scale: 1.1, depth: 8,
         foliage: [0x6a8a3a, 0x7fa148, 0x8db854] });
       addBush(this, 120, HORIZON + 14, { scale: 0.9, depth: 9, color: 0x7a9a48, dark: 0x5f7e36 });
       addBush(this, 760, HORIZON + 16, { scale: 0.7, depth: 9, color: 0x7a9a48, dark: 0x5f7e36 });
       for (let i = 0; i < 10; i++) addFlowers(this, 60 + i * 95, HORIZON + 30 + (i % 3) * 18, 9);
-    } else {
-      addTree(this, 90, HORIZON + 30, { scale: 1.1, depth: 8,
-        foliage: [0x2a4a32, 0x355c3c, 0x3f6e46] });
-      addTree(this, 880, HORIZON + 26, { scale: 1.0, depth: 8,
-        foliage: [0x2a4a32, 0x355c3c, 0x3f6e46] });
-      addStringLights(this, 60, HORIZON - 20, 900, HORIZON - 30, 11, 12);
     }
 
-    // ambience tuned per theme
-    if (this.chapterKey === "together") {
-      addFireflies(this, { count: 34, color: 0xffe9a8 });
-      addColorGrade(this, 0x4a5a9a, 0.1);
-    } else if (this.chapterKey === "danielle") {
+    if (this.chapterKey === "danielle") {
       addFireflies(this, { count: 20, color: 0xffd9a8, area: { x: 0, y: HORIZON, w: width, h: height - HORIZON } });
       addColorGrade(this, 0xffcf9a, 0.1);
     } else {
