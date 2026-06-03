@@ -26,7 +26,7 @@ const DEPTH = { fireflies: 50000, grade: 90000, vignette: 95000, ui: 100000 };
 
 // TEMP: set to true to walk into the house without finishing DJ + Danielle.
 // Flip back to false for the real, gated experience.
-const PREVIEW_UNLOCK_TOGETHER = true;
+const PREVIEW_UNLOCK_TOGETHER = false;
 
 export class HubScene extends Phaser.Scene {
   constructor() { super({ key: "HubScene" }); }
