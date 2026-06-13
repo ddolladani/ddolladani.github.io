@@ -13,6 +13,18 @@ export function panel(scene, x, y, w, h, opts = {}) {
   return c;
 }
 
+// A soft dark gradient bar pinned to the top of the screen. Sits behind the
+// HUD so white text reads cleanly over bright skies, fading to nothing so it
+// doesn't look like a hard banner.
+export function topScrim(scene, opts = {}) {
+  const { height = 96, alpha = 0.55, depth = 99999 } = opts;
+  const { width } = scene.scale;
+  const g = scene.add.graphics().setScrollFactor(0).setDepth(depth);
+  g.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, alpha, alpha, 0, 0);
+  g.fillRect(0, 0, width, height);
+  return g;
+}
+
 // A small "hint" pill at a position (e.g. "Press E to open").
 export function hintPill(scene, x, y, text, opts = {}) {
   const { depth = 120, accent = UI.gold } = opts;
@@ -43,8 +55,9 @@ export function heading(scene, x, y, text, opts = {}) {
   }).setOrigin(origin).setAlpha(0.35).setDepth(depth);
   const t = scene.add.text(x, y, text, {
     fontFamily: '"Fredoka", sans-serif', fontSize: `${size}px`, fontStyle: "700",
-    color
+    color, stroke: "#000000", strokeThickness: Math.max(3, size * 0.14)
   }).setOrigin(origin).setDepth(depth);
+  t.setShadow(0, 2, "#000000", 4, false, true);
   return { t, shadow };
 }
 

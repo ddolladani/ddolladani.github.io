@@ -259,6 +259,94 @@ export function addTreehouse(scene, x, y, opts = {}) {
   return c;
 }
 
+// ── Far rolling hills: a slow-parallax silhouette for real distance ───────
+// Lighter, lower-contrast colors read as "far away" (atmospheric perspective);
+// a low scrollFactor makes them drift slowly behind the action.
+export function addHills(scene, baseY, opts = {}) {
+  const {
+    color = 0x9fb6a8, alpha = 0.5, depth = -80, scroll = 0.4,
+    amp = 38, step = 150, height = 260
+  } = opts;
+  const { width } = scene.scale;
+  const g = scene.add.graphics().setDepth(depth).setScrollFactor(scroll);
+  g.fillStyle(color, alpha);
+  g.beginPath();
+  g.moveTo(-60, baseY + height);
+  g.lineTo(-60, baseY);
+  const seed = Math.random() * 10;
+  for (let x = -60; x <= width + 60; x += 12) {
+    const y = baseY - (Math.sin(x / step + seed) * 0.5 + 0.5) * amp;
+    g.lineTo(x, y);
+  }
+  g.lineTo(width + 60, baseY + height);
+  g.closePath();
+  g.fillPath();
+  return g;
+}
+
+// ── Horizon haze: soft light band sitting on the horizon line ─────────────
+// Sells atmospheric depth by lifting the value where sky meets ground.
+export function addHazeBand(scene, y, opts = {}) {
+  const { color = 0xffffff, alpha = 0.16, height = 110, depth = -76, scroll = 0.5 } = opts;
+  const { width } = scene.scale;
+  const g = scene.add.graphics().setDepth(depth).setScrollFactor(scroll);
+  // brightest at the horizon (bottom of the band), fading up to nothing
+  g.fillGradientStyle(color, color, color, color, 0, 0, alpha, alpha);
+  g.fillRect(0, y - height, width, height);
+  return g;
+}
+
+// ── Foreground fronds: dark leaves framing the screen edges ───────────────
+// A near-camera layer in front of gameplay (but behind motes/grade/vignette)
+// that frames the shot and adds a strong sense of depth. Screen-fixed.
+export function addForegroundFronds(scene, opts = {}) {
+  const { color = 0x152611, alpha = 0.92, depth = 45000 } = opts;
+  const { width, height } = scene.scale;
+  const g = scene.add.graphics().setDepth(depth).setScrollFactor(0);
+  const frond = (ox, oy, dir, scale, lean = 0) => {
+    const len = 250 * scale, wid = 64 * scale;
+    g.fillStyle(color, alpha);
+    g.beginPath();
+    g.moveTo(ox, oy);
+    g.lineTo(ox + dir * wid + lean, oy - len * 0.38);
+    g.lineTo(ox + dir * wid * 0.55 + lean, oy - len);
+    g.lineTo(ox - dir * wid * 0.18 + lean, oy - len * 0.72);
+    g.closePath();
+    g.fillPath();
+  };
+  // bottom-left cluster, fanning right
+  frond(-14, height + 24, 1, 1.25, 10);
+  frond(46,  height + 32, 1, 0.95, 24);
+  frond(104, height + 24, 1, 0.72, 30);
+  // bottom-right cluster, fanning left
+  frond(width + 14, height + 24, -1, 1.25, -10);
+  frond(width - 46, height + 32, -1, 0.95, -24);
+  frond(width - 104, height + 24, -1, 0.72, -30);
+  return g;
+}
+
+// ── Foreground grass: dark blade band along the very bottom edge ──────────
+// Same idea as fronds but for open lawns/gardens — a soft near-camera frame.
+export function addForegroundGrass(scene, opts = {}) {
+  const { color = 0x223a18, alpha = 0.9, depth = 45000, count = 46, max = 64 } = opts;
+  const { width, height } = scene.scale;
+  const g = scene.add.graphics().setDepth(depth).setScrollFactor(0);
+  g.fillStyle(color, alpha);
+  for (let i = 0; i < count; i++) {
+    const x = (i / count) * (width + 40) - 20 + Phaser.Math.Between(-8, 8);
+    const h = Phaser.Math.Between(max * 0.4, max);
+    const lean = Phaser.Math.Between(-10, 10);
+    const w = Phaser.Math.Between(5, 9);
+    g.beginPath();
+    g.moveTo(x - w, height + 6);
+    g.lineTo(x + lean, height - h);
+    g.lineTo(x + w, height + 6);
+    g.closePath();
+    g.fillPath();
+  }
+  return g;
+}
+
 // ── Distant tree-line silhouette (atmospheric background depth) ───────────
 export function addTreeline(scene, y, opts = {}) {
   const { color = 0x9fb6a8, alpha = 0.5, depth = -75, height = 90 } = opts;

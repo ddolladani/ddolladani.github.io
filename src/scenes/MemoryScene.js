@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { getStoredVolume } from "../ui/settings.js";
 
 // Launched on top of a chapter scene to reveal a memory as a polaroid
 // (image) or a framed video. Music ducks under video and restores after.
@@ -16,24 +17,41 @@ export class MemoryScene extends Phaser.Scene {
   create() {
     const { width, height } = this.scale;
 
+    this._closing = false;   // guards against _close() running twice
+    this._rendered = false;  // guards against the content rendering twice
+
+    // Make sure DOM/video cleanup always runs, even if the scene is torn
+    // down by something other than our own _close() (e.g. a chapter change).
+    this.events.once("shutdown", () => this._cleanupDom());
+
     // dim, slightly warm backdrop
     this.add.rectangle(0, 0, width, height, 0x140f0a, 0.88)
       .setOrigin(0).setInteractive();
 
     const key = `memory_${this.chapter}_${this.memIndex}`;
+    const secKey = this.memData.secondary ? `${key}_b` : null;
 
     if (this.memData.type === "image") {
-      if (!this.textures.exists(key)) {
-        this.load.image(key, this.memData.src);
+      // Queue whatever isn't already loaded (the main photo and, if present,
+      // the secondary corner photo) and render once after a single "complete".
+      const toLoad = [];
+      if (!this.textures.exists(key)) toLoad.push([key, this.memData.src]);
+      if (secKey && !this.textures.exists(secKey)) toLoad.push([secKey, this.memData.secondary]);
+
+      if (toLoad.length) {
+        // The loader's "complete" fires once whether files loaded or errored,
+        // so we render from that single event and decide based on whether the
+        // texture actually exists. (Listening to "loaderror" separately caused
+        // the polaroid to render twice on placeholders.)
+        toLoad.forEach(([k, s]) => this.load.image(k, s));
         this.load.once("complete", () => {
           this.textures.exists(key)
-            ? this._showImage(width, height, key)
-            : this._showPolaroid(width, height, null);
+            ? this._showImage(width, height, key, secKey)
+            : this._showPolaroid(width, height, null, secKey);
         });
-        this.load.once("loaderror", () => this._showPolaroid(width, height, null));
         this.load.start();
       } else {
-        this._showImage(width, height, key);
+        this._showImage(width, height, key, secKey);
       }
     } else {
       this._showVideo(width, height);
@@ -42,13 +60,16 @@ export class MemoryScene extends Phaser.Scene {
     this.cameras.main.fadeIn(450, 0, 0, 0);
   }
 
-  _showImage(width, height, key) {
+  _showImage(width, height, key, secKey) {
     const src  = this.textures.get(key).getSourceImage();
-    this._showPolaroid(width, height, { key, w: src.width || 400, h: src.height || 300 });
+    this._showPolaroid(width, height, { key, w: src.width || 400, h: src.height || 300 }, secKey);
   }
 
-  // photo === null renders a "coming soon" placeholder in the same frame
-  _showPolaroid(width, height, photo) {
+  // photo === null renders a "coming soon" placeholder in the same frame.
+  // secKey (optional) is a second photo tucked into the corner as a mini inset.
+  _showPolaroid(width, height, photo, secKey) {
+    if (this._rendered) return;   // never render the content twice
+    this._rendered = true;
     const maxW = width * 0.6;
     const maxH = height * 0.62;
     const iw = photo ? photo.w : 360;
@@ -89,6 +110,27 @@ export class MemoryScene extends Phaser.Scene {
       }).setOrigin(0.5));
     }
 
+    // secondary photo — a smaller "snapshot" tucked into the bottom-right corner
+    if (secKey && this.textures.exists(secKey)) {
+      const ssrc = this.textures.get(secKey).getSourceImage();
+      const sar = (ssrc.width || 4) / (ssrc.height || 3);
+      const insetW = Math.min(dW * 0.36, 160);
+      const insetH = insetW / sar;
+      const bw = 8;                              // little white border
+      const photoBottom = -frameH / 2 + padTop + dH;
+      const ix = dW / 2 - insetW / 2 - 8;
+      const iy = photoBottom - insetH / 2 - 8;
+      const inset = this.add.container(ix, iy).setAngle(Phaser.Math.Between(-6, -3));
+      const ig = this.add.graphics();
+      ig.fillStyle(0x000000, 0.4);
+      ig.fillRoundedRect(-insetW / 2 - bw + 3, -insetH / 2 - bw + 4, insetW + bw * 2, insetH + bw * 2, 3);
+      ig.fillStyle(0xfffdf5, 1);
+      ig.fillRoundedRect(-insetW / 2 - bw, -insetH / 2 - bw, insetW + bw * 2, insetH + bw * 2, 3);
+      inset.add(ig);
+      inset.add(this.add.image(0, 0, secKey).setDisplaySize(insetW, insetH));
+      container.add(inset);
+    }
+
     // caption (handwritten)
     container.add(this.add.text(0, frameH / 2 - padBot / 2 - 4, this.memData.caption, {
       fontFamily: '"Caveat", cursive', fontSize: "26px", fontStyle: "600",
@@ -122,6 +164,8 @@ export class MemoryScene extends Phaser.Scene {
   }
 
   _showVideo(width, height) {
+    if (this._rendered) return;   // never render the content twice
+    this._rendered = true;
     const music = this.sound.get("music_main");
     if (music) this.tweens.add({ targets: music, volume: 0, duration: 500 });
 
@@ -165,6 +209,21 @@ export class MemoryScene extends Phaser.Scene {
     document.body.appendChild(caption);
     this._captionEl = caption;
 
+    // secondary photo — a taped snapshot in the bottom-left corner of the video
+    if (this.memData.secondary) {
+      const inset = document.createElement("img");
+      inset.src = this.memData.secondary;
+      inset.style.cssText = `
+        position: fixed; top: calc(50% + ${maxH * 0.5 - 104}px);
+        left: calc(50% - ${maxW * 0.5 - 14}px);
+        width: ${Math.min(maxW * 0.24, 150)}px; transform: rotate(-5deg);
+        border: 6px solid #fffdf5; border-radius: 3px;
+        box-shadow: 0 10px 26px rgba(0,0,0,0.65); z-index: 102;
+      `;
+      document.body.appendChild(inset);
+      this._insetEl = inset;
+    }
+
     this._prompt(width, height);
     this._waitForClose();
   }
@@ -185,14 +244,10 @@ export class MemoryScene extends Phaser.Scene {
   }
 
   _close() {
-    if (this._videoEl) {
-      this._videoEl.pause();
-      this._videoEl.remove();
-      this._stickerEl?.remove();
-      this._captionEl?.remove();
-      const music = this.sound.get("music_main");
-      if (music) this.tweens.add({ targets: music, volume: 0.5, duration: 900 });
-    }
+    if (this._closing) return;   // ignore a second key/pointer press
+    this._closing = true;
+
+    this._cleanupDom();
     this.cameras.main.fadeOut(400, 0, 0, 0);
     this.cameras.main.once("camerafadeoutcomplete", () => {
       this.scene.stop();
@@ -200,5 +255,19 @@ export class MemoryScene extends Phaser.Scene {
         chapter: this.chapter, index: this.memIndex
       });
     });
+  }
+
+  // Tears down any DOM the video memory created and restores the music.
+  // Safe to call more than once (refs are nulled after removal).
+  _cleanupDom() {
+    if (!this._videoEl) return;
+    this._videoEl.pause();
+    this._videoEl.remove();
+    this._stickerEl?.remove();
+    this._captionEl?.remove();
+    this._insetEl?.remove();
+    this._videoEl = this._stickerEl = this._captionEl = this._insetEl = null;
+    const music = this.sound.get("music_main");
+    if (music) this.tweens.add({ targets: music, volume: getStoredVolume(), duration: 900 });
   }
 }

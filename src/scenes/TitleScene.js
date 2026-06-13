@@ -3,6 +3,7 @@ import { SKY } from "../art/palette.js";
 import { drawSky, addStars, addCloud } from "../art/Scenery.js";
 import { addHouse1166 } from "../art/House1166.js";
 import { addVignette, addColorGrade, addFireflies, ensureGlowTexture } from "../art/effects.js";
+import { addSettings, getStoredVolume } from "../ui/settings.js";
 
 export class TitleScene extends Phaser.Scene {
   constructor() { super({ key: "TitleScene" }); }
@@ -25,7 +26,7 @@ export class TitleScene extends Phaser.Scene {
 
     // start music if loaded
     if (this.cache.audio.exists("music_main") && !this.sound.get("music_main")) {
-      this.sound.add("music_main", { loop: true, volume: 0.5 }).play();
+      this.sound.add("music_main", { loop: true, volume: getStoredVolume() }).play();
     }
 
     // glow behind title
@@ -45,25 +46,27 @@ export class TitleScene extends Phaser.Scene {
 
     this.add.text(width / 2, height * 0.45, "The Book of Derrick", {
       fontFamily: '"Caveat", cursive', fontSize: "40px", fontStyle: "700",
-      color: "#fdf3df"
+      color: "#fdf3df", stroke: "#1a1226", strokeThickness: 5
     }).setOrigin(0.5).setDepth(102);
 
     this.add.text(width / 2, height * 0.55, "A Father's Day Adventure", {
       fontFamily: '"Nunito", sans-serif', fontSize: "15px", fontStyle: "700",
-      color: "#e8d8ff"
-    }).setOrigin(0.5).setDepth(102).setAlpha(0.85);
+      color: "#e8d8ff", stroke: "#1a1226", strokeThickness: 4
+    }).setOrigin(0.5).setDepth(102).setAlpha(0.95);
 
     // start prompt
     const start = this.add.text(width / 2, height * 0.74, "Press ENTER to begin", {
       fontFamily: '"Nunito", sans-serif', fontSize: "18px", fontStyle: "800",
-      color: "#ffffff"
+      color: "#ffffff", stroke: "#1a1226", strokeThickness: 5
     }).setOrigin(0.5).setDepth(102);
     this.tweens.add({ targets: start, alpha: 0.2, duration: 800, yoyo: true, repeat: -1 });
 
     this.add.text(width / 2, height * 0.93, "made with love by DJ & Danielle", {
       fontFamily: '"Caveat", cursive', fontSize: "22px",
-      color: "#cdbce0"
+      color: "#cdbce0", stroke: "#1a1226", strokeThickness: 4
     }).setOrigin(0.5).setDepth(102);
+
+    addSettings(this);
 
     this.cameras.main.fadeIn(800, 6, 8, 16);
 

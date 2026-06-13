@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { drawSky, addStars } from "../art/Scenery.js";
 import { SKY } from "../art/palette.js";
 import { addVignette, addColorGrade, addFireflies } from "../art/effects.js";
+import { getStoredVolume } from "../ui/settings.js";
 
 const LINES = [
   { t: "You did it, Dad.",                 s: 30, c: "#fdf3df", f: "Fredoka" },
@@ -25,8 +26,14 @@ export class EndingScene extends Phaser.Scene {
     addColorGrade(this, 0x3a4a8a, 0.12);
     addVignette(this, 0.5);
 
+    // The Hall of Fame paused the music — bring it back gently for the credits,
+    // settling at the player's chosen level.
     const music = this.sound.get("music_main");
-    if (music) this.tweens.add({ targets: music, volume: 0.28, duration: 2500 });
+    if (music) {
+      if (music.isPaused) music.resume();
+      music.setVolume(0);
+      this.tweens.add({ targets: music, volume: getStoredVolume(), duration: 2500 });
+    }
 
     const startY = height * 0.2;
     const gap = 56;

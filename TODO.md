@@ -4,7 +4,7 @@ A Father's Day adventure game for Derrick. Dad plays as himself, walks through
 1166 and its yard, and unlocks memories across three chapters (DJ, Danielle,
 Together). Built to run in the browser / GitHub Pages.
 
-Last worked on: 2026-06-02.
+Last worked on: 2026-06-03.
 
 ---
 
@@ -37,51 +37,68 @@ npm run build      # outputs to /docs for GitHub Pages
   are finished). Set true to preview the interior without finishing them.
 - Together (house door) = interior living room. DJ (tree) = forest/treehouse.
   Danielle (sign) = golden-hour garden — placeholder until she decides.
-- No real photos/videos or music added yet — placeholders show "photo coming
-  soon" and music is skipped until a real file exists.
+- Music is in: `public/assets/audio/gameMusic.wav` (wired in `BootScene`).
+  NOTE: it's a 31 MB WAV — works, but should be compressed to mp3/ogg
+  (~2–4 MB) before shipping to GitHub Pages for fast loads.
+- Avatar restyled to resemble Dad (brown skin, short textured hair, black
+  rectangular glasses, burgundy shirt) in `src/entities/Character.js`, using
+  the reference photos in `images/`.
+- No real memory photos/videos added yet — placeholders show "photo coming
+  soon" for each memory spot.
 
 ---
 
-## TODO — when I come back
+## TODO
 
-### 1. Fix lingering memory pop-up on the last memory
-- The content pop-up lingers/doesn't clean up properly on the **last** memory
-  of a chapter. Investigate `src/scenes/MemoryScene.js` (`_close`) and how it
-  interacts with chapter completion in `ChapterScene._completeChapter` — likely
-  a race between the memory closing and the completion transition firing.
+### ✅ Done (2026-06-03)
+- **1. Lingering memory pop-up** — fixed the double-render, made `_close`
+  idempotent, DOM cleanup on shutdown, listener no longer stacks on re-entry,
+  and the chapter now pauses under the open memory. (`MemoryScene.js`,
+  `ChapterScene.js`)
+- **3. Avatar looks like Dad** — brown skin, short textured hair, black
+  rectangular glasses, burgundy shirt. (`Character.js`) — being upgraded
+  further, see #10.
+- **4. Unreadable text** — added a top HUD scrim + strokes/shadows on HUD and
+  title-screen text. (`ui.js`, `TitleScene`, `HubScene`, `ChapterScene`)
+- **5. More art depth** — parallax hills, horizon haze, and foreground framing
+  (fronds/grass). (`Scenery.js` + the outdoor scenes)
+- **6. Music** — `gameMusic.wav` wired in `BootScene`. (compress to mp3/ogg
+  before shipping — it's a 31 MB WAV)
+- **7. Head/facing movement** — fixed the diagonal back-view flicker and
+  smoothed the left/right turn. (`Character.js`)
+- **9. Ego Tavern** — new walk-in gallery room wall-to-wall with framed photos
+  of Dad + neon sign. Entered via a tavern building in the yard.
+  (`EgoTavernScene.js`, building/entry in `HubScene.js`). Photos:
+  `public/assets/ego/p1–p5.jpg` (from `images/Ego/`).
+- **10. Better avatar** — Dad's real face photo, circular-masked, on the drawn
+  body. (`avatarHead.js`, `Character.js`; `dad_face` loaded in `BootScene`).
+  Falls back to the drawn head if the photo is missing. Tune the face crop via
+  the `fx/fy/fz` defaults in `ensureDadHead`.
 
-### 2. Ending → "Hall of Fame" easter egg (instead of ending right away)
-- After the final memory, don't go straight to the end. Open an **easter egg**:
-  a **Hall of Fame** that plays videos of different family members saying
-  "Happy Father's Day."
-- Concept: maybe a **movie theater** scene (screen + seats), each video a
-  "feature." Theater styling possibly themed like **NCG** (decide later).
-- Needs: collect the family video clips; decide theater layout + how he
-  advances between clips.
+### Open
 
-### 3. Make the avatar look like Dad
-- Provide a photo of Dad → restyle the `Character` (hair, skin tone, clothing,
-  maybe glasses/facial hair) in `src/entities/Character.js` to resemble him.
+### ✅ 2. Hall of Fame easter egg (DONE 2026-06-04)
+- DONE: he travels there now. Flow: finish 3rd chapter → back in the **yard**,
+  where the **ROAD CLOSED barricade lifts** and a glowing "🎬 To the theater ↓"
+  opens at the street → walk down past it → **ParkingLotScene** (dusk lot with
+  parked cars, lampposts, and the lit **NCG** theater + marquee) → press E at
+  the doors → **HallOfFameScene** (marquee, red curtains, screen, projector
+  beam, audience) → **EndingScene**. In the theater SPACE/E/→/ENTER advances a
+  feature, ESC skips. Driven by `src/config/hallOfFame.js`.
+- TO FINISH: add the real clips. Drop `.mp4` files in **`public/assets/family/`**
+  and point each `src` in `hallOfFame.js` at them (e.g. `assets/family/dj.mp4`).
+  Until then each person shows a polished "clip coming soon" card. Source clips
+  can be staged in `images/Family/` first (see [asset pipeline]).
 
-### 4. Fix unreadable text
-- Title/start screen text and the **top-of-screen HUD during play** are hard to
-  read. Add stronger contrast: backing plate/panel behind text, outline/shadow,
-  or reposition. Affects `TitleScene` and the HUD in `HubScene` / `ChapterScene`.
-
-### 5. More depth in the art/illustrations
-- Add more layering/parallax, atmospheric perspective, shadows, and detail
-  across scenes to make them feel richer and more three-dimensional.
-
-### 6. Music (NOT retro/chiptune anymore)
-- Find fitting background music — warm/cinematic/acoustic, since the art is
-  illustrated now, not pixel. Drop the file at
-  `public/assets/audio/chiptune_main.mp3` (or rename + update `BootScene`).
-- Should still duck/fade under video memories (already wired in MemoryScene).
-
-### 7. Fix head/facing movement following controls
-- The character's head/facing direction tied to keyboard input feels off on
-  desktop. Revisit facing logic in `src/entities/Character.js` (`update`,
-  the `facing` / `facingUp` handling).
+### ✅ 11. Ego Tavern v2 — big "cycle viewer" (DONE 2026-06-03)
+- DONE: one wall-sized gold frame; Dad walks to a glowing button and presses E
+  to cycle photos; button shows `x / n`; after 3 cycles the room dims (dark
+  overlay up + string lights/neon down). Driven by the `PHOTOS` list in
+  `EgoTavernScene.js`, so new Ego photos just drop in as `public/assets/ego/pN.jpg`.
+- Root-cause of the blur (for reference): ~2700px sources downscaled to tiny
+  frames with no mipmaps + the 960×640 canvas upscaled to the monitor. The big
+  viewer fixes the perceived blur. (A global crispness pass is still possible
+  later if wanted.)
 
 ### 8. Decide replacement for the Danielle sign
 - Ask Danielle what she wants her entry to be (instead of the signpost), then
@@ -90,8 +107,13 @@ npm run build      # outputs to /docs for GitHub Pages
 ---
 
 ## Content checklist (gather these)
+Drop source files in the `images/<Chapter>/` folders (DJ, Danielle, Together,
+Ego, Family, Misc). To wire them into the game they must be copied into
+`public/assets/...` and referenced (memories in `src/config/memories.js`).
 - [ ] ~5 photos/videos each for DJ, Danielle, Together (+ dates & captions)
-- [ ] Family "Happy Father's Day" video clips (for the Hall of Fame)
-- [ ] A clear photo of Dad (for the avatar)
-- [ ] Background music track
+      — `images/DJ`, `images/Danielle`, `images/Together` are still empty
+- [ ] Family "Happy Father's Day" video clips (for the Hall of Fame) — `images/Family`
+- [x] A clear photo of Dad (for the avatar) — `public/assets/avatar/dad_face.jpg`
+- [x] Ego Tavern photos — `images/Ego/` → `public/assets/ego/p1–p5.jpg`
+- [x] Background music track — `gameMusic.wav` (compress before shipping)
 - [ ] Danielle's entry idea

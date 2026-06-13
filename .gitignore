@@ -1,2 +1,9 @@
 node_modules/
 dist/
+
+# stray duplicate of the soundtrack (the real one is public/assets/audio/gameMusic.wav)
+/gameMusic.wav
+
+# local tooling / scratch
+.claude/
+scripts/_shot_*.png
