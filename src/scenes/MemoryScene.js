@@ -78,7 +78,15 @@ export class MemoryScene extends Phaser.Scene {
     const dW = iw * scale;
     const dH = ih * scale;
 
-    const padX = 26, padTop = 22, padBot = 84;
+    const padX = 26, padTop = 22;
+    // Build the caption up front and measure it so the white frame's bottom band
+    // can grow to fit long, multi-line captions instead of letting them spill
+    // off the photo onto the dark background (where the dark text is unreadable).
+    const caption = this.add.text(0, 0, this.memData.caption, {
+      fontFamily: '"Caveat", cursive', fontSize: "26px", fontStyle: "600",
+      color: "#3a3326", align: "center", wordWrap: { width: dW }
+    }).setOrigin(0.5);
+    const padBot = Math.max(84, Math.ceil(caption.height) + 30);
     const frameW = dW + padX * 2;
     const frameH = dH + padTop + padBot;
     const cx = width / 2;
@@ -131,11 +139,9 @@ export class MemoryScene extends Phaser.Scene {
       container.add(inset);
     }
 
-    // caption (handwritten)
-    container.add(this.add.text(0, frameH / 2 - padBot / 2 - 4, this.memData.caption, {
-      fontFamily: '"Caveat", cursive', fontSize: "26px", fontStyle: "600",
-      color: "#3a3326", align: "center", wordWrap: { width: dW }
-    }).setOrigin(0.5));
+    // caption (handwritten) — created/measured above; place it in the bottom band
+    caption.setPosition(0, frameH / 2 - padBot / 2 - 4);
+    container.add(caption);
 
     // date sticker (tape-like, top-right)
     const sticker = this.add.container(frameW / 2 - 30, -frameH / 2 + 6).setAngle(-6);
@@ -212,7 +218,7 @@ export class MemoryScene extends Phaser.Scene {
       const inset = document.createElement("img");
       inset.src = this.memData.secondary;
       inset.style.cssText = `
-        position: fixed; transform: rotate(-5deg);
+        position: fixed;
         width: ${Math.min(maxW * 0.24, 150)}px;
         border: 6px solid #fffdf5; border-radius: 3px;
         box-shadow: 0 10px 26px rgba(0,0,0,0.65); z-index: 102;
@@ -238,8 +244,12 @@ export class MemoryScene extends Phaser.Scene {
       caption.style.top      = `calc(50% + ${botEdge + 16}px)`;
       caption.style.maxWidth = `${dW}px`;
       if (this._insetEl) {
-        this._insetEl.style.top  = `calc(50% + ${botEdge - 90}px)`;
-        this._insetEl.style.left = `calc(50% - ${dW * 0.5 - 14}px)`;
+        // Anchor the snapshot's BOTTOM just inside the video's bottom-left
+        // corner (translateY(-100%)) so, whatever its height, it never reaches
+        // down into the caption that sits below the video.
+        this._insetEl.style.top       = `calc(50% + ${botEdge - 12}px)`;
+        this._insetEl.style.left      = `calc(50% - ${dW * 0.5 - 14}px)`;
+        this._insetEl.style.transform = "translateY(-100%) rotate(-5deg)";
       }
     };
     if (video.readyState >= 1) placeOverlays();

@@ -10,6 +10,7 @@ import { MemoryScene }  from "./scenes/MemoryScene.js";
 import { EgoTavernScene } from "./scenes/EgoTavernScene.js";
 import { ParkingLotScene } from "./scenes/ParkingLotScene.js";
 import { HallOfFameScene } from "./scenes/HallOfFameScene.js";
+import { FromTheKidsScene } from "./scenes/FromTheKidsScene.js";
 
 const config = {
   type: Phaser.AUTO,
@@ -38,7 +39,8 @@ const config = {
     MemoryScene,
     EgoTavernScene,
     ParkingLotScene,
-    HallOfFameScene
+    HallOfFameScene,
+    FromTheKidsScene
   ],
   physics: {
     default: "arcade",

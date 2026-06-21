@@ -46,7 +46,10 @@ export class TitleScene extends Phaser.Scene {
 
     this.add.text(width / 2, height * 0.45, "The Book of Derrick", {
       fontFamily: '"Caveat", cursive', fontSize: "40px", fontStyle: "700",
-      color: "#fdf3df", stroke: "#1a1226", strokeThickness: 5
+      color: "#fdf3df", stroke: "#1a1226", strokeThickness: 5,
+      // Caveat's cursive glyphs overhang their measured width, so Phaser clips
+      // the final "k" — extra horizontal padding gives the canvas room.
+      padding: { x: 12 }
     }).setOrigin(0.5).setDepth(102);
 
     this.add.text(width / 2, height * 0.55, "A Father's Day Adventure", {

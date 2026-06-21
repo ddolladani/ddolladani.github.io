@@ -4,50 +4,46 @@ import { ensureGlowTexture, addVignette, addColorGrade, addFireflies } from "../
 import { Character } from "../entities/Character.js";
 import { heading, topScrim } from "../ui/ui.js";
 import { addSettings } from "../ui/settings.js";
-import { hallOfFame } from "../config/hallOfFame.js";
+import { fromTheKids } from "../config/fromTheKids.js";
 
-// The Hall of Fame — a walk-through gallery. Each family "Happy Father's Day"
-// clip stands on its own lit pedestal along a long hall. Dad strolls left→right
-// and the clip in front of him starts playing (and pauses when he moves on).
-// Only the pedestal he's standing at runs a live <video>; the rest show a quiet
-// "now showing" panel. Walking off the right end rolls into the ending.
+// The finale — shown after the Hall of Fame, before the credits. Same walk-up-
+// to-play mechanic as the Hall of Fame, but just the two kids on big screens
+// side by side under a "Happy Father's Day" banner. Dad steps in front of a
+// screen and that clip plays; walking off the right end rolls the credits.
 
-const FLOOR_Y   = 430;          // where the gallery floor starts
-const SCREEN     = { w: 188, h: 280, cy: 232 };  // portrait clip screen
-const GAP        = 400;          // spacing between pedestals
-const FIRST_X    = 360;          // x of the first pedestal
-const ACT_RANGE  = 150;          // how close Dad must be to start a clip
+const FLOOR_Y  = 470;            // where the floor starts
+const SCREEN   = { w: 256, h: 340, cy: 276 };   // big portrait clip screens
+const CENTERS  = [330, 730];     // x of the two screens
+const ACT_RANGE = 170;           // how close Dad must be to start a clip
 const DEPTH = { fireflies: 50000, grade: 90000, vignette: 95000, ui: 100000 };
 
-export class HallOfFameScene extends Phaser.Scene {
-  constructor() { super({ key: "HallOfFameScene" }); }
+export class FromTheKidsScene extends Phaser.Scene {
+  constructor() { super({ key: "FromTheKidsScene" }); }
 
   create() {
     const { width, height } = this.scale;
-    this.features = hallOfFame.length ? hallOfFame
-      : [{ name: "The Family", caption: "Happy Father's Day!" }];
+    this.clips = (fromTheKids.clips && fromTheKids.clips.length)
+      ? fromTheKids.clips
+      : [{ name: "DJ" }, { name: "Danielle" }];
 
     this.pedestals = [];
     this.activeIdx = -1;
     this._leaving = false;
-
-    const lastX = FIRST_X + (this.features.length - 1) * GAP;
-    this.exitX = lastX + 300;
+    this.exitX = CENTERS[CENTERS.length - 1] + 300;
     this.worldW = this.exitX + 160;
 
     this.events.once("shutdown", () => this._deactivate());
 
-    // No background music in the Hall of Fame — the family clips carry their own
-    // audio. Pause it here; the ending resumes it.
+    // The kids' clips carry their own audio — pause the background music.
     const music = this.sound.get("music_main");
     if (music && music.isPlaying) music.pause();
 
-    this._buildHall(width, height);
-    this.features.forEach((f, i) => this._buildPedestal(i, FIRST_X + i * GAP, f));
+    this._buildRoom(width, height);
+    this.clips.slice(0, CENTERS.length).forEach((c, i) => this._buildScreen(i, CENTERS[i], c));
     this._buildExit(this.exitX, height);
 
     // ── Character ──
-    this.player = new Character(this, 120, FLOOR_Y + 120, { scale: 1.12, depth: FLOOR_Y + 120 });
+    this.player = new Character(this, 120, FLOOR_Y + 110, { scale: 1.12, depth: FLOOR_Y + 110 });
 
     // ── Camera (scrolls horizontally with Dad) ──
     this.cameras.main.setBounds(0, 0, this.worldW, height);
@@ -56,21 +52,21 @@ export class HallOfFameScene extends Phaser.Scene {
     this.cameras.main.fadeIn(700, 4, 3, 8);
 
     // ── Atmosphere (fixed to screen) ──
-    addFireflies(this, { count: 16, color: 0xffe2a0, depth: DEPTH.fireflies,
+    addFireflies(this, { count: 18, color: 0xffe2a0, depth: DEPTH.fireflies,
       area: { x: 0, y: 90, w: width, h: height - 160 } });
-    addColorGrade(this, 0x2a2150, 0.10).setDepth(DEPTH.grade);
-    addVignette(this, 0.55).setDepth(DEPTH.vignette);
+    addColorGrade(this, 0x3a2150, 0.10).setDepth(DEPTH.grade);
+    addVignette(this, 0.5).setDepth(DEPTH.vignette);
 
-    // ── UI (fixed) ──
-    topScrim(this, { height: 92, depth: DEPTH.ui - 1 });
-    const h = heading(this, width / 2, 36, "Hall of Fame", { size: 28 });
+    // ── Title banner (fixed) ──
+    topScrim(this, { height: 104, depth: DEPTH.ui - 1 });
+    const h = heading(this, width / 2, 40, fromTheKids.title || "Happy Father's Day", { size: 34 });
     h.t.setScrollFactor(0).setDepth(DEPTH.ui);
     h.shadow.setScrollFactor(0).setDepth(DEPTH.ui);
-    this.add.text(width / 2, 64, "Walk the gallery  ·  stand in front of a screen to play it", {
-      fontFamily: '"Nunito", sans-serif', fontSize: "13px", fontStyle: "700",
-      color: "#ffffff", stroke: "#000000", strokeThickness: 3
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(DEPTH.ui).setAlpha(0.92);
-    this.add.text(20, 30, "ESC  ·  skip to the end", {
+    this.add.text(width / 2, 74, fromTheKids.subtitle || "from your kids 💛", {
+      fontFamily: '"Caveat", cursive', fontSize: "24px", fontStyle: "700",
+      color: "#ffe6ac", stroke: "#000000", strokeThickness: 3
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(DEPTH.ui).setAlpha(0.95);
+    this.add.text(20, 30, "ESC  ·  skip to the credits", {
       fontFamily: '"Nunito", sans-serif', fontSize: "13px", fontStyle: "600",
       color: "#ffffff", stroke: "#000000", strokeThickness: 3
     }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(DEPTH.ui).setAlpha(0.85);
@@ -83,105 +79,90 @@ export class HallOfFameScene extends Phaser.Scene {
     this.escKey = this.input.keyboard.addKey("ESC");
   }
 
-  // ── Hall environment ───────────────────────────────────────────────────────
-  _buildHall(width, height) {
+  // ── Room environment ─────────────────────────────────────────────────────
+  _buildRoom(width, height) {
     const w = this.worldW;
-    // deep auditorium walls
     const bg = this.add.graphics().setDepth(-100);
-    bg.fillGradientStyle(0x140f22, 0x140f22, 0x0a0a14, 0x0a0a14, 1);
+    bg.fillGradientStyle(0x1a1230, 0x1a1230, 0x0b0a16, 0x0b0a16, 1);
     bg.fillRect(0, 0, w, height);
 
-    // wainscot band + floor
     const wains = this.add.graphics().setDepth(-96);
-    wains.fillStyle(0x241a30, 1); wains.fillRect(0, FLOOR_Y - 26, w, 26);
-    wains.fillStyle(0x32243f, 1); wains.fillRect(0, FLOOR_Y - 26, w, 5);
+    wains.fillStyle(0x2a1d3a, 1); wains.fillRect(0, FLOOR_Y - 26, w, 26);
+    wains.fillStyle(0x3a2a4f, 1); wains.fillRect(0, FLOOR_Y - 26, w, 5);
 
     const floor = this.add.graphics().setDepth(-95);
-    floor.fillGradientStyle(0x201826, 0x201826, 0x120d18, 0x120d18, 1);
+    floor.fillGradientStyle(0x241a2c, 0x241a2c, 0x140d1a, 0x140d1a, 1);
     floor.fillRect(0, FLOOR_Y, w, height - FLOOR_Y);
-    // floorboard sheen lines receding
-    floor.lineStyle(2, 0x2c2236, 0.5);
+    floor.lineStyle(2, 0x322640, 0.5);
     for (let y = FLOOR_Y + 26; y < height; y += 30) floor.lineBetween(0, y, w, y);
 
-    // a long red runner down the middle of the hall
     const rug = this.add.graphics().setDepth(-94);
     rug.fillStyle(0x6e1722, 0.9); rug.fillRect(0, height - 86, w, 70);
     rug.fillStyle(0x8a1f2e, 0.9); rug.fillRect(0, height - 80, w, 8);
     rug.lineStyle(3, 0xb8902f, 0.5); rug.strokeRect(24, height - 84, w - 48, 66);
   }
 
-  _buildPedestal(i, x, f) {
+  _buildScreen(i, x, clip) {
     const screenTop = SCREEN.cy - SCREEN.h / 2;
     const screenBot = SCREEN.cy + SCREEN.h / 2;
     const baseY = FLOOR_Y + 8;
     const c = this.add.container(x, 0).setDepth(baseY - 2);
     const key = ensureGlowTexture(this);
 
-    // spotlight cone from the ceiling onto the screen
+    // spotlight cone
     const cone = this.add.graphics();
     cone.fillStyle(0xfff3d0, 0.05);
     cone.fillPoints([
-      new Phaser.Geom.Point(-26, 92), new Phaser.Geom.Point(26, 92),
-      new Phaser.Geom.Point(SCREEN.w / 2 + 26, screenBot),
-      new Phaser.Geom.Point(-SCREEN.w / 2 - 26, screenBot)
+      new Phaser.Geom.Point(-34, 96), new Phaser.Geom.Point(34, 96),
+      new Phaser.Geom.Point(SCREEN.w / 2 + 30, screenBot),
+      new Phaser.Geom.Point(-SCREEN.w / 2 - 30, screenBot)
     ], true);
     c.add(cone);
-    c.add(this.add.image(0, SCREEN.cy, key).setScale(4, 3).setTint(0xbfd0ff)
+    c.add(this.add.image(0, SCREEN.cy, key).setScale(5, 3.6).setTint(0xbfd0ff)
       .setAlpha(0.05).setBlendMode(Phaser.BlendModes.ADD));
 
-    // plinth / column under the screen
+    // plinth + framed screen
     const g = this.add.graphics();
-    g.fillStyle(0x000000, 0.3); g.fillEllipse(0, baseY + 4, 150, 26);
-    g.fillStyle(0x2a2030, 1);  g.fillRect(-46, screenBot, 92, baseY - screenBot);
-    g.fillStyle(0x352942, 1);  g.fillRect(-46, screenBot, 92, 8);
-    g.fillStyle(0x1d1526, 1);  g.fillRect(-58, baseY - 12, 116, 14);   // base
-    g.fillStyle(0x3a2c4a, 1);  g.fillRect(-58, baseY - 12, 116, 4);
-
-    // framed screen
+    g.fillStyle(0x000000, 0.3); g.fillEllipse(0, baseY + 4, 190, 28);
+    g.fillStyle(0x2a2030, 1);  g.fillRect(-52, screenBot, 104, baseY - screenBot);
+    g.fillStyle(0x352942, 1);  g.fillRect(-52, screenBot, 104, 8);
     g.fillStyle(0x000000, 0.5);
     g.fillRoundedRect(-SCREEN.w / 2 - 12, screenTop - 12, SCREEN.w + 24, SCREEN.h + 24, 8);
     g.fillStyle(0x2a2620, 1);
-    g.fillRoundedRect(-SCREEN.w / 2 - 8, screenTop - 8, SCREEN.w + 16, SCREEN.h + 16, 6); // bezel
+    g.fillRoundedRect(-SCREEN.w / 2 - 8, screenTop - 8, SCREEN.w + 16, SCREEN.h + 16, 6);
     g.fillStyle(0x0c0c14, 1);
     g.fillRect(-SCREEN.w / 2, screenTop, SCREEN.w, SCREEN.h);
     c.add(g);
 
-    // quiet "screen" content shown when not playing: a play glyph + soft glow
+    // idle screen content (play glyph) shown when not playing
     const idle = this.add.container(0, SCREEN.cy);
-    idle.add(this.add.image(0, 0, key).setScale(2.2, 3.2).setTint(0x6a78c0)
+    idle.add(this.add.image(0, 0, key).setScale(3, 4).setTint(0x6a78c0)
       .setAlpha(0.10).setBlendMode(Phaser.BlendModes.ADD));
     idle.add(this.add.text(0, 0, "▶", {
-      fontFamily: '"Fredoka", sans-serif', fontSize: "30px", color: "#cdd6ff"
+      fontFamily: '"Fredoka", sans-serif', fontSize: "40px", color: "#cdd6ff"
     }).setOrigin(0.5).setAlpha(0.5));
     c.add(idle);
 
-    // brass name plaque on the plinth
-    const plaqueY = baseY - 30;
+    // brass name plaque
+    const plaqueY = baseY - 34;
     const pg = this.add.graphics();
-    pg.fillStyle(0x2a1c0e, 1); pg.fillRoundedRect(-70, plaqueY - 14, 140, 28, 4);
-    pg.lineStyle(1.5, 0xb8902f, 0.85); pg.strokeRoundedRect(-70, plaqueY - 14, 140, 28, 4);
+    pg.fillStyle(0x2a1c0e, 1); pg.fillRoundedRect(-80, plaqueY - 16, 160, 32, 4);
+    pg.lineStyle(1.5, 0xb8902f, 0.85); pg.strokeRoundedRect(-80, plaqueY - 16, 160, 32, 4);
     c.add(pg);
-    c.add(this.add.text(0, plaqueY, f.name || `Feature ${i + 1}`, {
-      fontFamily: '"Fredoka", sans-serif', fontSize: "14px", fontStyle: "700",
-      color: "#ffe6ac", align: "center", wordWrap: { width: 132 }
+    c.add(this.add.text(0, plaqueY, clip.name || `Kid ${i + 1}`, {
+      fontFamily: '"Fredoka", sans-serif', fontSize: "16px", fontStyle: "700",
+      color: "#ffe6ac", align: "center", wordWrap: { width: 150 }
     }).setOrigin(0.5));
 
-    // caption under the plaque
-    const cap = this.add.text(x, baseY + 34, f.caption ? `"${f.caption}"` : "", {
-      fontFamily: '"Caveat", cursive', fontSize: "20px", color: "#ffe6ac",
-      align: "center", wordWrap: { width: SCREEN.w + 60 }
-    }).setOrigin(0.5, 0).setDepth(baseY - 2);
-
-    // "coming soon" tag if there is no real clip
-    const comingSoon = !f.src ? this.add.text(x, screenTop - 26, "🎬 clip coming soon", {
-      fontFamily: '"Nunito", sans-serif', fontSize: "12px", fontStyle: "700",
+    // "coming soon" tag if there is no real clip yet — placed inside the screen,
+    // just below the play glyph, so it never collides with the title banner.
+    const comingSoon = !clip.src ? this.add.text(x, SCREEN.cy + 54, "🎬 clip coming soon", {
+      fontFamily: '"Nunito", sans-serif', fontSize: "13px", fontStyle: "700",
       color: "#9a93a8"
     }).setOrigin(0.5).setDepth(baseY) : null;
 
     this.pedestals.push({
-      i, x, f, idle, cap, comingSoon,
-      screenTop, screenBot,
-      // world-space rect of the live screen, for aligning the DOM <video>
+      i, x, f: clip, idle, comingSoon,
       rect: { x, cy: SCREEN.cy, w: SCREEN.w, h: SCREEN.h }
     });
   }
@@ -191,14 +172,14 @@ export class HallOfFameScene extends Phaser.Scene {
     const glow = this.add.image(x, height - 60, key).setScale(2.4, 2).setTint(0xffd56b)
       .setAlpha(0.3).setBlendMode(Phaser.BlendModes.ADD).setDepth(FLOOR_Y);
     this.tweens.add({ targets: glow, alpha: 0.6, duration: 1200, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
-    const t = this.add.text(x, height - 150, "EXIT  →", {
-      fontFamily: '"Fredoka", sans-serif', fontSize: "22px", fontStyle: "700",
+    const t = this.add.text(x, height - 150, "to the credits  →", {
+      fontFamily: '"Fredoka", sans-serif', fontSize: "20px", fontStyle: "700",
       color: "#fff8ec", stroke: "#000000", strokeThickness: 4
     }).setOrigin(0.5).setDepth(FLOOR_Y + 60);
     this.tweens.add({ targets: t, x: x + 10, duration: 900, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
   }
 
-  // ── Live clip playback ─────────────────────────────────────────────────────
+  // ── Live clip playback (one <video> at a time, like the Hall of Fame) ──────
   _activate(idx) {
     if (this.activeIdx === idx) return;
     this._deactivate();
@@ -220,7 +201,7 @@ export class HallOfFameScene extends Phaser.Scene {
       if (this._videoEl !== video) return;
       this._placeVideo();
       video.style.opacity = "1";
-      ped.idle.setAlpha(0.001);          // hide the idle glyph behind the clip
+      ped.idle.setAlpha(0.001);
     });
     video.addEventListener("error", () => { if (this._videoEl === video) this._deactivate(); });
   }
@@ -231,7 +212,6 @@ export class HallOfFameScene extends Phaser.Scene {
     this.activeIdx = -1;
   }
 
-  // Align the DOM <video> over its pedestal's screen, accounting for camera scroll.
   _placeVideo() {
     if (!this._videoEl || !this._videoPed) return;
     const cam = this.cameras.main;
@@ -246,6 +226,14 @@ export class HallOfFameScene extends Phaser.Scene {
     this._videoEl.style.height = `${h * sy}px`;
   }
 
+  _toCredits(fadeMs) {
+    if (this._leaving) return;
+    this._leaving = true;
+    this._deactivate();
+    this.cameras.main.fadeOut(fadeMs, 4, 3, 8);
+    this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("EndingScene"));
+  }
+
   update(time, delta) {
     if (this._leaving) return;
     const p = this.player;
@@ -256,7 +244,7 @@ export class HallOfFameScene extends Phaser.Scene {
     if (this.cursors.down.isDown || this.wasd.down.isDown)   vy =  PLAYER_SPEED;
 
     const nx = Phaser.Math.Clamp(p.x + vx * (delta / 1000), 28, this.worldW - 28);
-    const ny = Phaser.Math.Clamp(p.y + vy * (delta / 1000), FLOOR_Y + 60, this.scale.height - 30);
+    const ny = Phaser.Math.Clamp(p.y + vy * (delta / 1000), FLOOR_Y + 50, this.scale.height - 30);
     p.setPosition(nx, ny);
     p.setDepth(ny);
     p.update(vx, vy, delta);
@@ -271,20 +259,7 @@ export class HallOfFameScene extends Phaser.Scene {
     else if (this.activeIdx >= 0) this._deactivate();
     if (this._videoEl) this._placeVideo();
 
-    // off the right end → into the kids' finale (which then rolls the credits)
-    if (p.x >= this.exitX) {
-      this._leaving = true;
-      this._deactivate();
-      this.cameras.main.fadeOut(700, 4, 3, 8);
-      this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("FromTheKidsScene"));
-      return;
-    }
-
-    if (Phaser.Input.Keyboard.JustDown(this.escKey)) {
-      this._leaving = true;
-      this._deactivate();
-      this.cameras.main.fadeOut(450, 4, 3, 8);
-      this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("FromTheKidsScene"));
-    }
+    if (p.x >= this.exitX) { this._toCredits(700); return; }
+    if (Phaser.Input.Keyboard.JustDown(this.escKey)) this._toCredits(450);
   }
 }

@@ -18,5 +18,10 @@ export const hallOfFame = [
   { name: "Zoe", src: "assets/family/hof2.mp4", caption: "Happy Father's Day Uncle Derrick! 💛" },
   { name: "Wifey", src: "assets/family/hof3.mp4", caption: "Happy Father's Day baby! 💛" },
   { name: "Mom", src: "assets/family/hof4.mp4", caption: "Happy Father's Day son! 💛" },
-  { name: "Lil Sis", src: "assets/family/hof5.mp4", caption: "Happy Father's Day bro! 💛" }
+  { name: "Lil Sis", src: "assets/family/hof5.mp4", caption: "Happy Father's Day bro! 💛" },
+  // Placeholder for the mother of his kids — shows the polished "clip coming
+  // soon" card until the file is added. When ready: drop the clip at
+  // public/assets/family/hof6.mp4 and add  src: "assets/family/hof6.mp4"  below.
+  // Edit `name` to whatever you want on the brass plaque.
+  { name: "The Kids' Mom", caption: "Happy Father's Day" }
 ];
