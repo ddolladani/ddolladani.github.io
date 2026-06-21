@@ -46,7 +46,7 @@ export const memories = {
       date: "2008", caption: "Another flick with my pops..." }
   ],
 
-  danielle: [
+   danielle: [
     // Two photos from the same trip: ATV ride (main) + the suspension bridge (inset).
     { type: "image", src: "assets/memories/danielle/memory1.jpg",
       secondary: "assets/memories/danielle/memory1_b.jpg",
@@ -65,19 +65,19 @@ export const memories = {
       date: "July 2025",
       caption: "Antonio & Danielle's wedding — you telling Antonio to take care of me before you gave me away. So much love. So touching." },
     { type: "image", src: "assets/memories/danielle/memory6.jpg",
-      date: "Add date here", caption: "Add caption here" },
+      date: "Add date here", caption: "One of many family photos haha #throwback" },
     { type: "image", src: "assets/memories/danielle/memory7.jpg",
-      date: "Add date here", caption: "Add caption here" },
+      date: "Add date here", caption: "Favorite picture of us" },
     { type: "image", src: "assets/memories/danielle/memory8.jpg",
-      date: "Add date here", caption: "Add caption here" },
+      date: "Add date here", caption: "#Selfie" },
     { type: "image", src: "assets/memories/danielle/memory9.jpg",
-      date: "Add date here", caption: "Add caption here" },
+      date: "Add date here", caption: "Sockhop Father + Daughter Dance" },
     { type: "image", src: "assets/memories/danielle/memory10.jpg",
-      date: "Add date here", caption: "Add caption here" },
+      date: "Add date here", caption: "Our first Father + Daughter Dance" },
     { type: "image", src: "assets/memories/danielle/memory11.jpg",
-      date: "Add date here", caption: "Add caption here" },
+      date: "Add date here", caption: "Best Dad Ever" },
     { type: "image", src: "assets/memories/danielle/memory12.jpg",
-      date: "Add date here", caption: "Add caption here" }
+      date: "Add date here", caption: "Our last Father + Daughter Dance" }
   ],
 
   together: [
