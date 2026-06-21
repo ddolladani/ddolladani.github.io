@@ -19,6 +19,6 @@ export const hallOfFame = [
   { name: "Wifey", src: "assets/family/hof3.mp4", caption: "Happy Father's Day baby! 💛" },
   { name: "Mom", src: "assets/family/hof4.mp4", caption: "Happy Father's Day son! 💛" },
   { name: "Lil Sis", src: "assets/family/hof5.mp4", caption: "Happy Father's Day bro! 💛" },
-  // The mother of his kids. Edit `name` to whatever you want on the brass plaque.
-  { name: "The Kids' Mom", src: "assets/family/hof6.mp4", caption: "Happy Father's Day" }
+  // The mother of his kids.
+  { name: "Ebony", src: "assets/family/hof6.mp4", caption: "Happy Father's Day" }
 ];

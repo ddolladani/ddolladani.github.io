@@ -41,7 +41,7 @@ const PREVIEW_UNLOCK_TOGETHER = false;
 // TEMP: set to true to open the road to the theater (Hall of Fame → finale)
 // without collecting every memory, so the ending can be tested. Flip back to
 // false for the real, gated experience.
-const PREVIEW_OPEN_ROAD = true;
+const PREVIEW_OPEN_ROAD = false;
 
 export class HubScene extends Phaser.Scene {
   constructor() { super({ key: "HubScene" }); }
