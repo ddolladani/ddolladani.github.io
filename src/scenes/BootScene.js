@@ -13,8 +13,8 @@ export class BootScene extends Phaser.Scene {
   }
 
   create() {
-    // The avatar face photo always loads (used to build Dad's head texture).
-    this.load.image("dad_face", "assets/avatar/dad_face.jpg");
+    // The avatar's head — a transparent cutout of Dad's real head.
+    this.load.image("dad_head", "assets/avatar/dad_head.png");
 
     const begin = () => {
       // Proceed to the game whether or not every file loaded; a missing

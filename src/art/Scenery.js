@@ -201,6 +201,87 @@ export function addFlowers(scene, x, y, depth = 1) {
   return c;
 }
 
+// ── A defined flower bed: soil patch + stone border + clustered blooms ──────
+// Bigger and more deliberate than addFlowers — used to dress an entry/landmark.
+export function addFlowerBed(scene, x, y, opts = {}) {
+  const {
+    width = 120, depth = y, scale = 1,
+    colors = [0xf48fb1, 0xf8bbd0, 0xfff0f5, 0xe57399, 0xf6c5d8],
+    leaf = 0x4a7a34, leafDark = 0x355a25, count = 16
+  } = opts;
+  const c = scene.add.container(x, y).setDepth(depth).setScale(scale);
+  const rx = width / 2, ry = width / 4.6;
+  const g = scene.add.graphics();
+
+  // dark mulched soil
+  g.fillStyle(0x000000, 0.18); g.fillEllipse(0, 5, rx * 2 + 8, ry * 2);
+  g.fillStyle(0x4a3322, 1);    g.fillEllipse(0, 0, rx * 2, ry * 2);
+  g.fillStyle(0x5e4430, 1);    g.fillEllipse(0, -2, rx * 2 - 8, ry * 2 - 6);
+  // stone border ring
+  for (let a = 0; a < Math.PI * 2; a += 0.45) {
+    const sx = Math.cos(a) * rx, sy = Math.sin(a) * ry;
+    g.fillStyle(0x9b948a, 1); g.fillEllipse(sx, sy, 9, 6);
+    g.fillStyle(0xb8b2a6, 1); g.fillEllipse(sx, sy - 1, 6, 4);
+  }
+  c.add(g);
+
+  // blooms: short stem + a little petal cluster, sorted so lower ones sit in front
+  const blooms = [];
+  for (let i = 0; i < count; i++) {
+    blooms.push({ bx: Phaser.Math.Between(-rx + 8, rx - 8), by: Phaser.Math.Between(-ry + 2, ry - 4) });
+  }
+  blooms.sort((a, b) => a.by - b.by);
+  const fg = scene.add.graphics();
+  for (const { bx, by } of blooms) {
+    const col = Phaser.Utils.Array.GetRandom(colors);
+    const r = Phaser.Math.FloatBetween(2.6, 4.2);
+    const stem = Phaser.Math.Between(6, 11);
+    fg.lineStyle(2, leafDark, 1); fg.lineBetween(bx, by, bx, by - stem);
+    fg.fillStyle(leaf, 1); fg.fillEllipse(bx - 3, by - stem * 0.5, 5, 3);
+    // petals
+    fg.fillStyle(col, 1);
+    for (let p = 0; p < 5; p++) {
+      const ang = (p / 5) * Math.PI * 2;
+      fg.fillCircle(bx + Math.cos(ang) * r, by - stem + Math.sin(ang) * r, r * 0.7);
+    }
+    fg.fillStyle(0xffe9a8, 1); fg.fillCircle(bx, by - stem, r * 0.55); // center
+  }
+  c.add(fg);
+  return c;
+}
+
+// ── A whole field of flowers carpeting the ground (Danielle's garden theme) ──
+// Drawn into a single graphics for performance; denser/larger toward the
+// foreground so the field reads with depth. Sits just above the ground, so the
+// character walks over it.
+export function addFlowerField(scene, opts = {}) {
+  const { width } = scene.scale;
+  const {
+    top = 340, bottom = 1180, depth = -67, density = 320,
+    colors = [0xf48fb1, 0xf8bbd0, 0xfff0f5, 0xe57399, 0xf6c5d8, 0xffd56b, 0xffe9a8]
+  } = opts;
+  const g = scene.add.graphics().setDepth(depth);
+  const range = bottom - top;
+  for (let i = 0; i < density; i++) {
+    const t = Math.random();                  // 0 = far/top, 1 = near/bottom
+    const y = top + range * t;
+    const x = Math.random() * width;
+    const s = 0.7 + t * 1.2;                   // larger toward the foreground
+    const head = y - 5 * s;
+    g.lineStyle(1.2 * s, 0x3a5a2c, 0.8); g.lineBetween(x, y, x, head);
+    g.fillStyle(0x4a7a34, 0.85); g.fillEllipse(x - 2 * s, y - 2 * s, 3.4 * s, 1.7 * s);
+    const col = Phaser.Utils.Array.GetRandom(colors);
+    const r = (1.3 + Math.random() * 1.2) * s;
+    g.fillStyle(col, 0.95);
+    for (let p = 0; p < 5; p++) {
+      const a = (p / 5) * Math.PI * 2;
+      g.fillCircle(x + Math.cos(a) * r, head + Math.sin(a) * r, r * 0.62);
+    }
+    g.fillStyle(0xffe9a8, 1); g.fillCircle(x, head, r * 0.5);
+  }
+  return g;
+}
+
 // ── Treehouse: trunk + plank platform, railing, roof, and ladder ──────────
 export function addTreehouse(scene, x, y, opts = {}) {
   const { scale = 1, depth = 0 } = opts;

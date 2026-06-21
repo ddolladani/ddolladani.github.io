@@ -2,8 +2,8 @@ import Phaser from "phaser";
 import { PLAYER_SPEED } from "../config/gameConfig.js";
 import { CHAPTER_THEME } from "../art/palette.js";
 import {
-  drawSky, addSun, addCloud, addTree, addBush, addFlowers, addTreehouse,
-  addHills, addHazeBand, addForegroundFronds, addForegroundGrass
+  drawSky, addSun, addCloud, addTree, addBush, addTreehouse,
+  addHills, addHazeBand, addForegroundFronds, addForegroundGrass, addFlowerField
 } from "../art/Scenery.js";
 import { drawLivingRoom } from "../art/HouseInterior.js";
 import { addVignette, addColorGrade, addFireflies } from "../art/effects.js";
@@ -29,8 +29,10 @@ const SPOT_LAYOUTS = {
     { x: 330, y: 1080 }
   ],
   danielle: [
-    { x: 260, y: 580 }, { x: 690, y: 660 }, { x: 440, y: 830 },
-    { x: 750, y: 980 }, { x: 210, y: 1070 }
+    { x: 470, y: 1090 }, { x: 250, y: 1015 }, { x: 710, y: 985 },
+    { x: 410, y: 905 },  { x: 620, y: 835 },  { x: 190, y: 800 },
+    { x: 780, y: 720 },  { x: 360, y: 690 },  { x: 560, y: 605 },
+    { x: 230, y: 545 },  { x: 690, y: 525 },  { x: 450, y: 445 }
   ],
   together: [
     { x: 160, y: 430 }, { x: 330, y: 520 }, { x: 480, y: 430 },
@@ -235,10 +237,8 @@ export class ChapterScene extends Phaser.Scene {
     addTree(this, 80, 820, { scale: 1.4, depth: 820, foliage: gardenGreen });
     addBush(this, 160, OUTDOOR_GROUND_TOP + 24, { scale: 1.0, depth: OUTDOOR_GROUND_TOP + 24, color: 0x7a9a48, dark: 0x5f7e36 });
     addBush(this, 720, 640, { scale: 0.8, depth: 640, color: 0x7a9a48, dark: 0x5f7e36 });
-    for (let i = 0; i < 22; i++) {
-      addFlowers(this, 60 + Math.random() * 840,
-        OUTDOOR_GROUND_TOP + 40 + Math.random() * (OUTDOOR_WORLD_H - OUTDOOR_GROUND_TOP - 80));
-    }
+    // a whole field of flowers carpeting the garden
+    addFlowerField(this, { top: OUTDOOR_GROUND_TOP + 16, bottom: OUTDOOR_WORLD_H - 30, density: 340 });
 
     // near-camera grass framing the bottom edge
     addForegroundGrass(this, { color: 0x4a5a26, alpha: 0.82 });

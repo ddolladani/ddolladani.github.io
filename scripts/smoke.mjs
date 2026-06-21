@@ -34,18 +34,12 @@ const go = async (fn, label, settleMs = 2200) => {
   await page.screenshot({ path: `scripts/_shot_${label}.png` });
 };
 
-// Hub (big head, DJ label-on-trunk, gear). Spawn "from danielle" to land mid-yard.
+// Hub: spawn "from danielle" to land at the sign — see the flower bed + big head.
 await go(() => window.__GAME__.scene.start("HubScene", { from: "danielle" }), "hub", 2600);
-// open the settings panel via the game's input by faking a click is unreliable;
-// instead just confirm the Hub renders. Then a chapter, a memory, and the HOF.
+// Danielle chapter — spots spread up the world.
 await go(() => window.__GAME__.scene.start("ChapterScene", { chapter: "danielle" }), "chapter", 2600);
-await go(() => window.__GAME__.scene.start("MemoryScene", {
-  chapter: "danielle", index: 0, callerScene: "ChapterScene",
-  memData: { type: "image", src: "assets/memories/danielle/memory1.jpg",
-    secondary: "assets/memories/danielle/memory1_b.jpg",
-    date: "April 2021", caption: "Cabo San Lucas — a really fun family vacation!" }
-}), "memory", 2600);
-await go(() => window.__GAME__.scene.start("HallOfFameScene"), "hof", 2600);
+// Ego Tavern — rug + avatar (cycle-on-rug)
+await go(() => window.__GAME__.scene.start("EgoTavernScene"), "ego", 2600);
 
 console.log(errors.length ? "ERRORS:\n" + errors.join("\n") : "no console/page errors (favicon 404 ignored)");
 await browser.close();

@@ -19,31 +19,31 @@ export const memories = {
   // DJ — captions/dates are placeholders for now (the photos/videos all show).
   dj: [
     { type: "image", src: "assets/memories/dj/memory1.jpg",
-      date: "Add date here", caption: "Add caption here" },
+      date: "Back in the Day", caption: "First Haircut SMH" },
     // DJ2: video is the main piece, the photo rides in the corner.
     { type: "video", src: "assets/memories/dj/memory2.mp4",
       secondary: "assets/memories/dj/memory2_b.jpg",
-      date: "Add date here", caption: "Add caption here" },
+      date: "April 20, 2024", caption: "Championship Day Support" },
     { type: "image", src: "assets/memories/dj/memory3.jpg",
-      date: "Add date here", caption: "Add caption here" },
+      date: "January 27, 2023", caption: "18th Birthday to Cancun...What happens in Cancun, stays in Cancun" },
     // DJ4: video main + photo in the corner.
     { type: "video", src: "assets/memories/dj/memory4.mp4",
       secondary: "assets/memories/dj/memory4_b.jpg",
-      date: "Add date here", caption: "Add caption here" },
+      date: "April 22, 2023", caption: "Senior Prom, you were there to make sure I looked better than you...and you succeeded" },
     { type: "image", src: "assets/memories/dj/memory5.jpg",
-      date: "Add date here", caption: "Add caption here" },
+      date: "May 19, 2023", caption: "High-School Graduation, always there to support me every step of the way!" },
     { type: "image", src: "assets/memories/dj/memory6.jpg",
-      date: "Add date here", caption: "Add caption here" },
+      date: "June 24, 2023", caption: "Hawa'ii Grad Trip!! This is right after we did ATVs in the mud...great time." },
     { type: "image", src: "assets/memories/dj/memory7.jpg",
-      date: "Add date here", caption: "Add caption here" },
+      date: "January 28, 2026", caption: "21st Birthday!! First time getting drunk with you, you're a pretty chill guy lol." },
     { type: "image", src: "assets/memories/dj/memory8.jpg",
-      date: "Add date here", caption: "Add caption here" },
+      date: "Long time again", caption: "Not sure when this was but 'm sure it was during family photos. Love you man" },
     { type: "image", src: "assets/memories/dj/memory9.jpg",
-      date: "Add date here", caption: "Add caption here" },
+      date: "???", caption: "I also don't know where this was but it's about the time I became taller than you...super important day" },
     { type: "image", src: "assets/memories/dj/memory10.jpg",
-      date: "Add date here", caption: "Add caption here" },
+      date: "2007", caption: "More family photos but I was a cutie patootie" },
     { type: "image", src: "assets/memories/dj/memory11.jpg",
-      date: "Add date here", caption: "Add caption here" }
+      date: "2008", caption: "Another flick with my pops..." }
   ],
 
   danielle: [
@@ -82,11 +82,11 @@ export const memories = {
 
   together: [
     { type: "image", src: "assets/memories/together/memory1.jpg",
-      date: "Add date here", caption: "Add caption here" },
+      date: "Awhile Ago", caption: "Pageant day for Dani!!" },
     { type: "image", src: "assets/memories/together/memory2.jpg",
       date: "August 2023", caption: "Moving DJ into his freshman dorm 💛" },
     { type: "image", src: "assets/memories/together/memory3.jpg",
-      date: "Add date here", caption: "Add caption here" },
+      date: "2018", caption: "Hilton Head Proposal" },
     { type: "image", src: "assets/memories/together/memory4.jpg",
       date: "2021", caption: "Daddy's birthday 🎂" },
     { type: "image", src: "assets/memories/together/memory5.jpg",

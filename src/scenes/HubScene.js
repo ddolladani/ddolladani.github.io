@@ -3,7 +3,7 @@ import { PLAYER_SPEED } from "../config/gameConfig.js";
 import { SKY, GROUND, CHAPTER_THEME, FOLIAGE } from "../art/palette.js";
 import {
   drawSky, addSun, addCloud, addTree, addBush, addFlowers, addTreeline,
-  addHills, addHazeBand, addForegroundGrass
+  addHills, addHazeBand, addForegroundGrass, addFlowerBed
 } from "../art/Scenery.js";
 import { addVignette, addColorGrade, addFireflies } from "../art/effects.js";
 import { addHouse1166 } from "../art/House1166.js";
@@ -116,7 +116,8 @@ export class HubScene extends Phaser.Scene {
     this._entry("dj", TREE.x, TREE.y + 10, CHAPTER_THEME.dj.accent, "DJ", false, null, null,
       { labelDY: -150, labelSize: 22, pillDY: 40, doneDY: -182 });
 
-    // Danielle — signpost
+    // Danielle — a flower bed beneath her signpost (matches her garden chapter)
+    addFlowerBed(this, SIGN.x, SIGN.y + 8, { depth: SIGN.y - 2, width: 150 });
     const dSign = signpost(this, SIGN.x, SIGN.y, CHAPTER_THEME.danielle.label, CHAPTER_THEME.danielle.accent, SIGN.y);
     this._entry("danielle", SIGN.x, SIGN.y, CHAPTER_THEME.danielle.accent, "Danielle", false, dSign);
 

@@ -120,6 +120,8 @@ export class EgoTavernScene extends Phaser.Scene {
     const rug = this.add.graphics().setDepth(-95);
     rug.fillStyle(0x7a2230, 0.85); rug.fillEllipse(width / 2, height - 56, 360, 110);
     rug.lineStyle(4, 0xb8902f, 0.6); rug.strokeEllipse(width / 2, height - 56, 330, 96);
+    // standing anywhere on the rug lets Dad cycle the portrait (see update)
+    this.rugCx = width / 2; this.rugCy = height - 56; this.rugRx = 184; this.rugRy = 58;
 
     this._neonSign(width / 2, 64);
   }
@@ -253,9 +255,11 @@ export class EgoTavernScene extends Phaser.Scene {
     p.setDepth(ny);
     p.update(vx, vy, delta);
 
-    const near = Phaser.Math.Distance.Between(p.x, p.y, this.buttonX, this.buttonY) < 84;
-    this.cyclePill.setVisible(near);
-    if (near && Phaser.Input.Keyboard.JustDown(this.eKey)) this._cycle();
+    // cycling works while standing anywhere on the rug (no need to find the button)
+    const rdx = (p.x - this.rugCx) / this.rugRx, rdy = (p.y - this.rugCy) / this.rugRy;
+    const onRug = rdx * rdx + rdy * rdy <= 1;
+    this.cyclePill.setVisible(onRug);
+    if (onRug && Phaser.Input.Keyboard.JustDown(this.eKey)) this._cycle();
 
     if (Phaser.Input.Keyboard.JustDown(this.escKey)) {
       this.cameras.main.fadeOut(450, 6, 4, 2);

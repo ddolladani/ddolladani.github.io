@@ -1,12 +1,10 @@
 import Phaser from "phaser";
-import { ensureDadHead } from "./avatarHead.js";
 
-// A friendly, illustrated little character drawn entirely with graphics.
-// Supports left/right facing (horizontal flip), a "facing away" pose when
-// walking up, a bouncy walk cycle, and a soft ground shadow.
+// A friendly, illustrated little character: a drawn body with Dad's real head
+// (a transparent cutout PNG) on top. The body flips left/right and does a bouncy
+// walk cycle; the head is always forward-facing (it lives outside the flip
+// wrapper, so it never mirrors or turns around) for a fun bobblehead look.
 
-// Styled to resemble Dad: warm medium-brown skin, short dark textured hair,
-// his signature thick black rectangular glasses, and a burgundy shirt.
 const SKIN   = 0xc68a55;
 const SKIN_D = 0x9c6a3d;
 const HAIR   = 0x241a14;
@@ -16,6 +14,10 @@ const PANTS  = 0x2f3640;
 const PANTS_D= 0x232931;
 const SHOE   = 0x222222;
 const GLASS  = 0x141414;  // thick black frames
+
+const HEAD_KEY = "dad_head";
+const HEAD_H   = 74;       // displayed head height (big, bobblehead-style)
+const HEAD_Y   = -80;      // head rest position above the body
 
 export class Character {
   constructor(scene, x, y, opts = {}) {
@@ -29,7 +31,7 @@ export class Character {
     this.shadow = scene.add.ellipse(0, 2, 40, 12, 0x000000, 0.22);
     this.root.add(this.shadow);
 
-    // flip wrapper (scaleX flips horizontally for left-facing)
+    // flip wrapper (scaleX flips horizontally for left-facing) — body only
     this.flip = scene.add.container(0, 0);
     this.root.add(this.flip);
 
@@ -43,7 +45,6 @@ export class Character {
 
     this.phase = 0;
     this.moving = false;
-    this.facingUp = false;
     this.facing = 1;        // target facing: 1 = right, -1 = left
     this.facingVisual = 1;  // smoothed flip, eases toward `facing`
   }
@@ -76,86 +77,39 @@ export class Character {
     this.frontArm.add(this._arm(SHIRT));
     this.bob.add(this.frontArm);
 
-    // head — oversized for a fun bobblehead look (his real face, large on the body)
-    this.head = this.scene.add.container(0, -64);
-    // `frontParts` are hidden when walking away; backHair shows instead.
-    this.frontParts = [];
-
-    const headKey = ensureDadHead(this.scene);
-    if (headKey) this._buildPhotoHead(headKey);
-    else this._buildDrawnHead();
-
-    // back-of-head hair (shown when facing up) — shared by both head styles
-    this.backHair = this.scene.add.graphics();
-    this.backHair.fillStyle(HAIR, 1);
-    this.backHair.fillCircle(0, -6, 19);
-    [[-13, -19], [-5, -23], [5, -23], [13, -19], [0, -22]]
-      .forEach(([cx, cy]) => this.backHair.fillCircle(cx, cy, 5));
-    this.backHair.setVisible(false);
-    this.head.add(this.backHair);
-
-    this.bob.add(this.head);
+    // head — Dad's real cutout, forward-facing, on TOP of the body (added to
+    // root, not the flip wrapper, so it never mirrors or turns away).
+    this.head = this.scene.add.container(0, HEAD_Y);
+    if (this.scene.textures.exists(HEAD_KEY)) {
+      const src = this.scene.textures.get(HEAD_KEY).getSourceImage();
+      const w = HEAD_H * ((src.width || 3) / (src.height || 4));
+      // soft contact shadow so the head doesn't look pasted on
+      const sh = this.scene.add.ellipse(0, HEAD_H * 0.42, w * 0.7, 8, 0x000000, 0.18);
+      this.head.add(sh);
+      this.head.add(this.scene.add.image(0, 0, HEAD_KEY).setDisplaySize(w, HEAD_H));
+    } else {
+      this._buildDrawnHead();
+    }
+    this.root.add(this.head);
   }
 
-  // Dad's real face, circular-masked, on top of the drawn body.
-  _buildPhotoHead(headKey) {
-    const neck = this.scene.add.graphics();
-    neck.fillStyle(SKIN_D, 1); neck.fillRect(-4.5, 6, 9, 10);
-    this.head.add(neck);
-
-    const shadow = this.scene.add.graphics();
-    shadow.fillStyle(0x000000, 0.18); shadow.fillCircle(0.7, -4, 20);
-    this.head.add(shadow);
-
-    const photo = this.scene.add.image(0, -5, headKey).setDisplaySize(40, 40);
-    this.head.add(photo);
-
-    const ring = this.scene.add.graphics();
-    ring.lineStyle(2, 0x2a1f18, 0.55); ring.strokeCircle(0, -5, 20);
-    this.head.add(ring);
-
-    this.frontParts.push(photo, shadow, ring);
-  }
-
-  // Fallback: the friendly drawn head styled to resemble Dad.
+  // Fallback head if the cutout PNG isn't available — a simple forward-facing
+  // drawn head styled to resemble Dad.
   _buildDrawnHead() {
-    const hg = this.scene.add.graphics();
-    hg.fillStyle(SKIN_D, 1); hg.fillRect(-3.5, 3, 7, 7);
-    hg.fillStyle(SKIN, 1); hg.fillCircle(0, -4, 11);
-    hg.fillStyle(SKIN_D, 0.3); hg.fillCircle(4, -2, 9);
-    hg.fillStyle(HAIR, 1);
-    hg.slice(0, -4, 12, Phaser.Math.DegToRad(180), Phaser.Math.DegToRad(360), false);
-    hg.fillPath();
-    hg.fillRect(-12, -6, 24, 4);
-    [[-8, -12], [-3, -15], [3, -15], [8, -12], [0, -14]]
-      .forEach(([cx, cy]) => hg.fillCircle(cx, cy, 3.2));
-    this.head.add(hg);
-    this.frontParts.push(hg);
-
-    const face = this.scene.add.graphics();
-    face.fillStyle(0x2a2438, 1);
-    face.fillCircle(-4, -3, 1.5);
-    face.fillCircle(4, -3, 1.5);
-    face.fillStyle(0x9fb4c4, 0.16);
-    face.fillRect(-7.6, -5.6, 6.8, 5.2);
-    face.fillRect(0.8, -5.6, 6.8, 5.2);
-    face.lineStyle(1.4, GLASS, 1);
-    face.strokeRect(-7.6, -5.6, 6.8, 5.2);
-    face.strokeRect(0.8, -5.6, 6.8, 5.2);
-    face.lineBetween(-0.8, -3.4, 0.8, -3.4);
-    face.lineBetween(-7.6, -4.8, -10.5, -5.2);
-    face.lineBetween(7.6, -4.8, 10.5, -5.2);
-    face.fillStyle(0x241a14, 0.5);
-    face.fillEllipse(0, 0.4, 6.5, 1.7);
-    face.lineStyle(1.4, 0x4a2f28, 1);
-    face.beginPath();
-    face.arc(0, 1.6, 3.1, Phaser.Math.DegToRad(20), Phaser.Math.DegToRad(160));
-    face.strokePath();
-    face.fillStyle(0xd98a6a, 0.28);
-    face.fillCircle(-6.5, 1, 1.8);
-    face.fillCircle(6.5, 1, 1.8);
-    this.head.add(face);
-    this.frontParts.push(face);
+    const g = this.scene.add.graphics();
+    g.fillStyle(SKIN_D, 1); g.fillRect(-7, 22, 14, 12);   // neck
+    g.fillStyle(SKIN, 1);   g.fillCircle(0, 0, 26);        // face
+    g.fillStyle(HAIR, 1);                                  // hair cap
+    g.slice(0, 0, 27, Phaser.Math.DegToRad(180), Phaser.Math.DegToRad(360), false); g.fillPath();
+    g.fillRect(-27, -2, 54, 6);
+    // glasses
+    g.fillStyle(0x9fb4c4, 0.18); g.fillRect(-17, -8, 15, 12); g.fillRect(2, -8, 15, 12);
+    g.lineStyle(3, GLASS, 1); g.strokeRect(-17, -8, 15, 12); g.strokeRect(2, -8, 15, 12);
+    g.lineBetween(-2, -3, 2, -3);
+    // mouth
+    g.lineStyle(2, 0x4a2f28, 1);
+    g.beginPath(); g.arc(0, 9, 6, Phaser.Math.DegToRad(20), Phaser.Math.DegToRad(160)); g.strokePath();
+    this.head.add(g);
   }
 
   _leg(col, shoe) {
@@ -183,14 +137,8 @@ export class Character {
     this.moving = speed > 1;
     const DEAD = 1; // ignore sub-pixel jitter
 
-    // Horizontal facing: only update when there's real horizontal input,
-    // otherwise keep the last facing (so pure up/down doesn't reset it).
+    // Horizontal facing of the BODY only (the head stays forward).
     if (Math.abs(vx) > DEAD) this.facing = vx < 0 ? -1 : 1;
-
-    // Show the back-of-head pose only when movement is clearly upward —
-    // a diagonal (up + sideways) keeps the side/front view so it doesn't
-    // flicker to the back when vx and vy are equal.
-    this.facingUp = vy < -DEAD && Math.abs(vy) > Math.abs(vx) * 1.3;
 
     // Ease the horizontal flip toward the target so quick direction changes
     // read as a turn instead of an instant mirror snap.
@@ -200,10 +148,6 @@ export class Character {
     this.flip.scaleX = Math.abs(this.facingVisual) < 0.12
       ? Math.sign(this.facingVisual || this.facing) * 0.12
       : this.facingVisual;
-
-    // facing-away pose: hide the front of the head, show the back hair
-    for (const p of this.frontParts) p.setVisible(!this.facingUp);
-    this.backHair.setVisible(this.facingUp);
 
     if (this.moving) {
       this.phase += (dt / 1000) * 9;
@@ -216,7 +160,8 @@ export class Character {
       this.frontArm.rotation = -s * 0.6;
       this.backArm.rotation  =  s * 0.6;
       this.bob.y = -Math.abs(c) * 2.5;
-      this.head.rotation = s * 0.04;
+      this.head.rotation = s * 0.03;            // gentle bobblehead wobble
+      this.head.y = HEAD_Y + this.bob.y;
     } else {
       // ease back to rest
       const ease = (v, t) => v + (t - v) * 0.2;
@@ -229,7 +174,7 @@ export class Character {
       this.bob.y = ease(this.bob.y, 0);
       this.head.rotation = ease(this.head.rotation, 0);
       // gentle idle breathing
-      this.head.y = -64 + Math.sin(this.scene.time.now / 600) * 0.6;
+      this.head.y = HEAD_Y + this.bob.y + Math.sin(this.scene.time.now / 600) * 0.6;
     }
   }
 }
