@@ -3,7 +3,8 @@ import { PLAYER_SPEED } from "../config/gameConfig.js";
 import { CHAPTER_THEME } from "../art/palette.js";
 import {
   drawSky, addSun, addCloud, addTree, addBush, addTreehouse,
-  addHills, addHazeBand, addForegroundFronds, addForegroundGrass, addFlowerField
+  addHills, addHazeBand, addForegroundFronds, addForegroundGrass, addFlowerField,
+  bakeGraphics
 } from "../art/Scenery.js";
 import { drawLivingRoom } from "../art/HouseInterior.js";
 import { addVignette, addColorGrade, addFireflies } from "../art/effects.js";
@@ -260,6 +261,8 @@ export class ChapterScene extends Phaser.Scene {
       const hh = 3 + Math.random() * 5;
       t.fillTriangle(x, y, x + 2, y - hh, x + 4, y);
     }
+    // Static speckle layer — bake it so it isn't re-tessellated every frame.
+    bakeGraphics(this, t, width, this.worldH, -69);
   }
 
   _completeChapter() {

@@ -1,6 +1,20 @@
 import Phaser from "phaser";
 import { ensureGlowTexture } from "./effects.js";
 
+// Bake a one-shot STATIC graphics into a GPU texture and swap it for a single
+// Image. Phaser's WebGL pipeline re-tessellates a Graphics object's entire
+// command list every frame, so dense static art (e.g. a 340-flower field) costs
+// thousands of draw ops per frame for something that never changes. Baking turns
+// that into one textured quad. Only use for graphics that won't be redrawn.
+let _bakeSeq = 0;
+export function bakeGraphics(scene, g, w, h, depth = 0, scrollFactor = 1) {
+  const key = `baked_${scene.scene.key}_${_bakeSeq++}`;
+  g.generateTexture(key, Math.ceil(w), Math.ceil(h));
+  g.destroy();
+  return scene.add.image(0, 0, key).setOrigin(0, 0)
+    .setDepth(depth).setScrollFactor(scrollFactor);
+}
+
 // ── Sky: smooth 3-stop vertical gradient ──────────────────────────────────
 export function drawSky(scene, palette, depth = -100) {
   const { width, height } = scene.scale;
@@ -279,7 +293,9 @@ export function addFlowerField(scene, opts = {}) {
     }
     g.fillStyle(0xffe9a8, 1); g.fillCircle(x, head, r * 0.5);
   }
-  return g;
+  // Bake the whole field to a texture — it's static, so this avoids redrawing
+  // hundreds of flowers every frame (the main cause of garden-scene lag).
+  return bakeGraphics(scene, g, width, bottom + 20, depth);
 }
 
 // ── Treehouse: trunk + plank platform, railing, roof, and ladder ──────────
