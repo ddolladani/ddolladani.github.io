@@ -188,8 +188,7 @@ export class MemoryScene extends Phaser.Scene {
     const sticker = document.createElement("div");
     sticker.textContent = this.memData.date;
     sticker.style.cssText = `
-      position: fixed; top: calc(50% - ${maxH * 0.5 + 8}px);
-      left: calc(50% + ${maxW * 0.28}px); transform: rotate(-6deg);
+      position: fixed; transform: translate(-50%, 0) rotate(-6deg);
       background: #ffd56b; padding: 6px 12px; border-radius: 4px;
       font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 14px;
       color: #5a3a14; z-index: 101;
@@ -200,10 +199,9 @@ export class MemoryScene extends Phaser.Scene {
     const caption = document.createElement("div");
     caption.textContent = this.memData.caption;
     caption.style.cssText = `
-      position: fixed; top: calc(50% + ${maxH * 0.42}px);
-      left: 50%; transform: translateX(-50%);
+      position: fixed; left: 50%; transform: translateX(-50%);
       font-family: 'Caveat', cursive; font-weight: 600; font-size: 28px;
-      color: #fdf3df; text-align: center; z-index: 101; max-width: ${maxW}px;
+      color: #fdf3df; text-align: center; z-index: 101;
       text-shadow: 0 2px 8px rgba(0,0,0,0.6);
     `;
     document.body.appendChild(caption);
@@ -214,15 +212,38 @@ export class MemoryScene extends Phaser.Scene {
       const inset = document.createElement("img");
       inset.src = this.memData.secondary;
       inset.style.cssText = `
-        position: fixed; top: calc(50% + ${maxH * 0.5 - 104}px);
-        left: calc(50% - ${maxW * 0.5 - 14}px);
-        width: ${Math.min(maxW * 0.24, 150)}px; transform: rotate(-5deg);
+        position: fixed; transform: rotate(-5deg);
+        width: ${Math.min(maxW * 0.24, 150)}px;
         border: 6px solid #fffdf5; border-radius: 3px;
         box-shadow: 0 10px 26px rgba(0,0,0,0.65); z-index: 102;
       `;
       document.body.appendChild(inset);
       this._insetEl = inset;
     }
+
+    // The video honors max-width/max-height while keeping its aspect ratio, so
+    // its on-screen size is usually smaller than the maxW×maxH box. Anchor the
+    // overlays to the ACTUAL rendered size (once metadata is known) instead of
+    // the max box, otherwise the date sticker/caption float off in empty space.
+    const placeOverlays = () => {
+      const ar = (video.videoWidth || 16) / (video.videoHeight || 9);
+      let dW = maxW, dH = maxW / ar;
+      if (dH > maxH) { dH = maxH; dW = maxH * ar; }
+      // The video is centered then nudged up via translateY(-56%): its center
+      // sits 6% of its height above the viewport center.
+      const topEdge = dH * 0.56;   // px above 50% to the video's top edge
+      const botEdge = dH * 0.44;   // px below 50% to the video's bottom edge
+      sticker.style.top  = `calc(50% - ${topEdge + 6}px)`;
+      sticker.style.left = `calc(50% + ${dW * 0.5 - 28}px)`;
+      caption.style.top      = `calc(50% + ${botEdge + 16}px)`;
+      caption.style.maxWidth = `${dW}px`;
+      if (this._insetEl) {
+        this._insetEl.style.top  = `calc(50% + ${botEdge - 90}px)`;
+        this._insetEl.style.left = `calc(50% - ${dW * 0.5 - 14}px)`;
+      }
+    };
+    if (video.readyState >= 1) placeOverlays();
+    else video.addEventListener("loadedmetadata", placeOverlays, { once: true });
 
     this._prompt(width, height);
     this._waitForClose();
