@@ -20,7 +20,7 @@ export const fromTheKids = {
   title: "Happy Father's Day",
   subtitle: "from your kids 💛",
   clips: [
-    { name: "DJ" /* , src: "assets/kids/dj.mp4" */ },
-    { name: "Danielle" /* , src: "assets/kids/danielle.mp4" */ }
+    { name: "DJ", src: "assets/kids/dj.mp4" },
+    { name: "Danielle", src: "assets/kids/danielle.mp4" }
   ]
 };

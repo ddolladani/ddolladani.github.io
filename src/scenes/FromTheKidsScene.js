@@ -143,8 +143,9 @@ export class FromTheKidsScene extends Phaser.Scene {
     }).setOrigin(0.5).setAlpha(0.5));
     c.add(idle);
 
-    // brass name plaque
-    const plaqueY = baseY - 34;
+    // brass name plaque — kept just below the screen so the live <video>
+    // (which covers the screen rect) never hides the name during playback
+    const plaqueY = baseY - 14;
     const pg = this.add.graphics();
     pg.fillStyle(0x2a1c0e, 1); pg.fillRoundedRect(-80, plaqueY - 16, 160, 32, 4);
     pg.lineStyle(1.5, 0xb8902f, 0.85); pg.strokeRoundedRect(-80, plaqueY - 16, 160, 32, 4);
