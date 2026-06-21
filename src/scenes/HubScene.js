@@ -38,6 +38,11 @@ const DEPTH = { fireflies: 50000, grade: 90000, vignette: 95000, ui: 100000 };
 // Flip back to false for the real, gated experience.
 const PREVIEW_UNLOCK_TOGETHER = false;
 
+// TEMP: set to true to open the road to the theater (Hall of Fame → finale)
+// without collecting every memory, so the ending can be tested. Flip back to
+// false for the real, gated experience.
+const PREVIEW_OPEN_ROAD = true;
+
 export class HubScene extends Phaser.Scene {
   constructor() { super({ key: "HubScene" }); }
 
@@ -67,7 +72,8 @@ export class HubScene extends Phaser.Scene {
     this.completed = this.registry.get("completedChapters") || [];
     this.togetherUnlocked = PREVIEW_UNLOCK_TOGETHER ||
       (this.completed.includes("dj") && this.completed.includes("danielle"));
-    this.allDone = ["dj", "danielle", "together"].every(k => this.completed.includes(k));
+    this.allDone = PREVIEW_OPEN_ROAD ||
+      ["dj", "danielle", "together"].every(k => this.completed.includes(k));
     this.lowerY = this.allDone ? (WORLD_H - 30) : (STREET_TOP - 16);
     this._leaving = false;
 
